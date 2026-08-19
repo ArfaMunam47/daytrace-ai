@@ -1,0 +1,6 @@
+{
+  "name": "DayTrace",
+  "description": "Adaptive productivity, focus timer, realistic daily planning, distraction boundaries, interruption tracking, and honest AI mentoring.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
