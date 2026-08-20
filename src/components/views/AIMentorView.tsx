@@ -40,9 +40,11 @@ const PRESET_TOPICS = [
   { label: '👋 Say Hello', prompt: 'Hello! How are you doing today?' },
   { label: '🎯 Pick #1 Priority', prompt: 'Look at my current tasks and help me select my single #1 Must-Do focus block.' },
   { label: '⚡ Beat Procrastination', prompt: 'I am struggling to start my next priority task. Help me lower activation energy.' },
+  { label: '🛡️ Stay Disciplined', prompt: 'How can I stay disciplined when my motivation drops and distractions are high?' },
   { label: '📚 Deep Study Sprints', prompt: 'How should I structure my 25-minute study intervals to maximize retention?' },
   { label: '🧺 Household & Life', prompt: 'I had unexpected chores and family interruptions today. How do I adapt without guilt?' },
   { label: '📱 Distraction Boundaries', prompt: 'Give me a pragmatic strategy to enforce time limits on social media feeds.' },
+  { label: '📅 Plan Tomorrow', prompt: 'Help me plan a realistic schedule for tomorrow based on my capacity.' },
 ];
 
 // Helper to format basic markdown-style text safely without external dependencies
@@ -438,7 +440,6 @@ What would you like to explore or work on today? Feel free to ask for advice on 
       }
 
       // Tier-3 Context-aware Dynamic Coaching Engine Fallback
-      setErrorNotice('Using instant local AI response.');
       setLastFailedQuery(query);
 
       const lower = query.toLowerCase();
@@ -462,13 +463,23 @@ What would you like to explore or work on today? Feel free to ask for advice on 
         lower.startsWith('hey') ||
         lower.includes('how are you')
       ) {
-        contextualReply = `Hey ${userFirstName}! 👋 Good to see you. How are you doing today, and what's on your mind?`;
-      } else if (lower.includes('procrastinat') || lower.includes('start') || lower.includes('hard to focus')) {
-        contextualReply = `To beat procrastination, lower the activation energy:\n\n1. **Commit to 5 minutes**: Don't aim to finish the entire project—just open the document and write for 5 minutes.\n2. **Remove visual friction**: Close background tabs and set your phone facing down.\n3. **Start the Focus Timer**: Action always precedes motivation.`;
-      } else if (lower.includes('distraction') || lower.includes('phone') || lower.includes('social')) {
-        contextualReply = `When handling digital distractions:\n\n• Use the **Focus Timer** with a clear 25-minute single-task goal.\n• Keep a small scratchpad next to you. If a random urge or browsing impulse strikes, jot it down to check during your 5-minute break.\n• Remember: Distraction is usually a relief valve for task friction. Break your next step down smaller.`;
+        contextualReply = `Hey ${userFirstName}! 👋 Good to see you. How are you doing today, and what would you like to focus on or chat about?`;
+      } else if (lower.includes('procrastinat') || lower.includes('start') || lower.includes('hard to focus') || lower.includes('activation energy')) {
+        contextualReply = `To beat procrastination, lower the activation energy immediately:\n\n1. **Commit to 5 minutes**: Don't aim to finish the entire project—just open the document and work for 5 minutes.\n2. **Remove visual friction**: Close background tabs and set your phone facing down.\n3. **Start the Focus Timer**: Action always precedes motivation.`;
+      } else if (lower.includes('disciplin') || lower.includes('self-control') || lower.includes('consistency')) {
+        contextualReply = `Discipline isn't about brute willpower—it's about systems and environments:\n\n1. **Rely on Triggers**: Set a specific time and trigger to begin work so you don't negotiate with yourself.\n2. **Lower Setup Friction**: Prepare your tools the night before so starting requires zero effort.\n3. **Never Miss Twice**: If you get interrupted today, refocus immediately on the next block.`;
+      } else if (lower.includes('pick #1 priority') || lower.includes('priority') || lower.includes('must-do')) {
+        contextualReply = `To select your #1 Must-Do priority:\n\nAsk yourself: *"If I could only accomplish ONE single outcome today before shutting down, which one would make the day a success?"*\n\nProtect 1 uninterrupted focus block for that item before doing secondary tasks.`;
+      } else if (lower.includes('study sprint') || lower.includes('study') || lower.includes('pomodoro') || lower.includes('retention')) {
+        contextualReply = `For high-retention study intervals:\n\n1. **25-Minute Deep Focus**: Zero split attention or browsing feeds.\n2. **Active Retrieval**: In the final 2 minutes, jot down the 3 core takeaways from memory without looking at notes.\n3. **5-Minute True Rest**: Step away from all screens to allow memory consolidation.`;
+      } else if (lower.includes('chore') || lower.includes('household') || lower.includes('family interruption') || lower.includes('guilt')) {
+        contextualReply = `In DayTrace, handling family responsibilities, household chores, and caretaking is **never classified as wasted time or failure**.\n\nLog them honestly as Unplanned Responsibilities, compress your remaining plan without guilt, and protect 1 core focus block for your highest priority.`;
+      } else if (lower.includes('distraction') || lower.includes('phone') || lower.includes('social') || lower.includes('feed')) {
+        contextualReply = `When enforcing distraction boundaries:\n\n• Use the **Focus Timer** with a clear 25-minute single-task goal.\n• Keep your phone in another room or out of sight during deep work blocks.\n• Use the **10-Second Rule**: When you feel the reflex to open a feed, take 3 deep breaths before opening it. That simple friction breaks the subconscious loop.`;
+      } else if (lower.includes('plan tomorrow') || lower.includes('plan my day')) {
+        contextualReply = `Here is a sustainable planning framework:\n\n1. **Must Do (1–2 core tasks)**: High-leverage items that define success.\n2. **Should Do (1–2 items)**: Valuable progress tasks if energy allows.\n3. **Life Buffer (1.5–2 hours)**: Budget real time for meals, chores, and unexpected delays.`;
       } else {
-        contextualReply = `I understand, ${userFirstName}. How can I best assist you with this right now?`;
+        contextualReply = `I'm here to support your daily flow, ${userFirstName}. Feel free to ask for help on task prioritization, beating procrastination, setting focus timers, or reviewing where your time went today.`;
       }
 
       setMessages((prev) =>
@@ -477,7 +488,7 @@ What would you like to explore or work on today? Feel free to ask for advice on 
             ? {
                 ...msg,
                 text: contextualReply,
-                source: 'DayTrace Mentor Engine',
+                source: 'DayTrace Coach',
                 fallbackUsed: true,
                 isStreaming: false,
               }
@@ -525,37 +536,37 @@ What would you like to explore or work on today? Feel free to ask for advice on 
   return (
     <div className="max-w-4xl w-full mx-auto flex flex-col h-full min-h-0 animate-in fade-in duration-150 px-2.5 sm:px-4 py-2">
       {/* Top Bar / Header */}
-      <div className="flex items-center justify-between gap-2 pb-2 border-b border-zinc-800/80 shrink-0">
+      <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-white/5 shrink-0">
         <div className="flex items-center gap-2.5">
           <div className="relative">
-            <div className="w-8 h-8 rounded-xl bg-emerald-950/80 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shadow-xs">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-950/80 to-[#102018] border border-emerald-500/40 flex items-center justify-center text-emerald-400 shadow-[0_4px_12px_rgba(16,185,129,0.2),inset_0_1px_1px_rgba(255,255,255,0.15)]">
               <BrainCircuit className="w-4 h-4" />
             </div>
-            <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-zinc-950" />
+            <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-[#0f1117] shadow-[0_0_6px_rgba(16,185,129,0.8)]" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-sm md:text-base font-bold text-zinc-100 tracking-tight leading-tight">
+              <h1 className="text-sm md:text-base font-extrabold text-white tracking-tight leading-tight">
                 AI Mentor
               </h1>
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-emerald-950/60 border border-emerald-500/30 text-emerald-300 font-mono">
+              <span className="clay-pill-emerald inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold">
                 <Zap className="w-2.5 h-2.5 text-emerald-400" /> Gemini
               </span>
             </div>
-            <p className="text-[11px] text-zinc-400 leading-none mt-0.5 hidden sm:block">
+            <p className="text-[11px] text-zinc-400 leading-none mt-0.5 hidden sm:block font-medium">
               Evidence-based AI guide for focus, realistic planning & habits
             </p>
           </div>
         </div>
 
         {/* Action Controls & Tab Switcher */}
-        <div className="flex items-center gap-1.5">
-          <div className="flex items-center bg-zinc-900/90 p-0.5 rounded-lg border border-zinc-800 text-xs">
+        <div className="flex items-center gap-2">
+          <div className="flex items-center clay-card-sm p-1 rounded-xl text-xs">
             <button
               onClick={() => setActiveTab('chat')}
-              className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition cursor-pointer flex items-center gap-1 ${
+              className={`px-3 py-1 rounded-lg text-[11px] font-bold transition cursor-pointer flex items-center gap-1.5 ${
                 activeTab === 'chat'
-                  ? 'bg-emerald-600 text-white shadow-xs'
+                  ? 'clay-btn-primary text-white shadow-[0_2px_8px_rgba(16,185,129,0.3)]'
                   : 'text-zinc-400 hover:text-zinc-200'
               }`}
             >
@@ -564,9 +575,9 @@ What would you like to explore or work on today? Feel free to ask for advice on 
             </button>
             <button
               onClick={() => setActiveTab('weekly-review')}
-              className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition cursor-pointer flex items-center gap-1 ${
+              className={`px-3 py-1 rounded-lg text-[11px] font-bold transition cursor-pointer flex items-center gap-1.5 ${
                 activeTab === 'weekly-review'
-                  ? 'bg-emerald-600 text-white shadow-xs'
+                  ? 'clay-btn-primary text-white shadow-[0_2px_8px_rgba(16,185,129,0.3)]'
                   : 'text-zinc-400 hover:text-zinc-200'
               }`}
             >
@@ -579,7 +590,7 @@ What would you like to explore or work on today? Feel free to ask for advice on 
             <button
               onClick={handleResetChat}
               title="Start a new chat"
-              className="p-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-zinc-200 rounded-lg transition cursor-pointer text-xs flex items-center"
+              className="clay-btn-secondary p-2 text-zinc-400 hover:text-zinc-200 rounded-xl transition text-xs flex items-center"
             >
               <RotateCcw className="w-3.5 h-3.5" />
             </button>
@@ -592,17 +603,17 @@ What would you like to explore or work on today? Feel free to ask for advice on 
         <div className="flex-1 flex flex-col min-h-0 pt-2">
           {/* Offline / Error notice banner */}
           {errorNotice && (
-            <div className="mb-2 p-2.5 bg-amber-950/60 border border-amber-500/40 rounded-xl flex items-center justify-between gap-2 text-xs text-amber-200 shrink-0">
+            <div className="mb-2 p-3 bg-gradient-to-r from-amber-950/60 to-[#221810] border border-amber-500/40 rounded-xl flex items-center justify-between gap-2 text-xs text-amber-200 shrink-0 shadow-[0_4px_12px_rgba(245,158,11,0.15)]">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
-                <span className="text-[11px]">{errorNotice}</span>
+                <span className="text-[11px] font-medium">{errorNotice}</span>
               </div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-2">
                 {lastFailedQuery && (
                   <button
                     onClick={() => handleSendMessage(lastFailedQuery)}
                     disabled={isStreaming}
-                    className="px-2 py-0.5 bg-amber-600 hover:bg-amber-500 text-white rounded-md text-[10px] font-medium flex items-center gap-1 transition cursor-pointer"
+                    className="clay-pill-amber px-2.5 py-1 text-[10px] font-bold flex items-center gap-1 transition"
                   >
                     <RefreshCw className={`w-2.5 h-2.5 ${isStreaming ? 'animate-spin' : ''}`} />
                     <span>Retry</span>
@@ -610,7 +621,7 @@ What would you like to explore or work on today? Feel free to ask for advice on 
                 )}
                 <button
                   onClick={() => setErrorNotice(null)}
-                  className="text-amber-400 hover:text-amber-200 text-[10px] font-medium cursor-pointer"
+                  className="text-amber-400 hover:text-amber-200 text-[10px] font-bold cursor-pointer"
                 >
                   Dismiss
                 </button>
@@ -620,7 +631,7 @@ What would you like to explore or work on today? Feel free to ask for advice on 
 
           {/* Quick Action Prompt Chips */}
           <div className="flex items-center gap-1.5 pb-2 shrink-0 overflow-x-auto no-scrollbar scrollbar-none py-0.5">
-            <span className="text-[10px] text-zinc-500 font-semibold uppercase tracking-wider shrink-0 flex items-center gap-1 pl-0.5 mr-0.5">
+            <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider shrink-0 flex items-center gap-1 pl-0.5 mr-0.5">
               <Sparkles className="w-2.5 h-2.5 text-amber-400" /> Prompts:
             </span>
             {PRESET_TOPICS.map((p, i) => (
@@ -628,7 +639,7 @@ What would you like to explore or work on today? Feel free to ask for advice on 
                 key={i}
                 onClick={() => handleSendMessage(p.prompt)}
                 disabled={isStreaming}
-                className="px-2.5 py-1 bg-zinc-900/90 border border-zinc-800 hover:border-emerald-500/40 hover:bg-zinc-800/80 text-zinc-300 text-[11px] sm:text-xs rounded-full transition cursor-pointer disabled:opacity-40 shrink-0 flex items-center gap-1 leading-normal whitespace-nowrap"
+                className="px-3 py-1 clay-card-sm hover:border-emerald-500/40 text-zinc-300 text-[11px] sm:text-xs rounded-full transition cursor-pointer disabled:opacity-40 shrink-0 flex items-center gap-1 leading-normal whitespace-nowrap font-medium"
               >
                 <span>{p.label}</span>
               </button>
@@ -648,16 +659,16 @@ What would you like to explore or work on today? Feel free to ask for advice on 
                 }`}
               >
                 {msg.sender === 'mentor' && (
-                  <div className="w-7 h-7 rounded-lg bg-emerald-950/80 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0 mt-0.5">
+                  <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-emerald-950/80 to-[#102018] border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0 mt-0.5 shadow-[0_2px_8px_rgba(16,185,129,0.2)]">
                     <BrainCircuit className="w-3.5 h-3.5" />
                   </div>
                 )}
 
                 <div
-                  className={`group relative max-w-[88%] sm:max-w-[80%] md:max-w-2xl px-3.5 py-2.5 rounded-2xl ${
+                  className={`group relative max-w-[88%] sm:max-w-[80%] md:max-w-2xl px-4 py-3 rounded-2xl ${
                     msg.sender === 'user'
-                      ? 'bg-emerald-600 text-white rounded-tr-xs shadow-xs'
-                      : 'bg-zinc-900/90 border border-zinc-800/80 text-zinc-200 rounded-tl-xs shadow-xs'
+                      ? 'bg-gradient-to-r from-emerald-600 to-emerald-500 text-white rounded-tr-xs shadow-[0_4px_16px_rgba(16,185,129,0.35),inset_0_1px_1px_rgba(255,255,255,0.25)] border border-emerald-400/40'
+                      : 'clay-card text-zinc-200 rounded-tl-xs'
                   }`}
                 >
                   {/* Thinking state before first stream chunk */}
@@ -679,10 +690,10 @@ What would you like to explore or work on today? Feel free to ask for advice on 
 
                   {/* Message Footer: Timestamp, Source & Copy Button */}
                   <div
-                    className={`text-[10px] flex items-center justify-between gap-2 pt-1.5 mt-1 border-t ${
+                    className={`text-[10px] flex items-center justify-between gap-2 pt-2 mt-1.5 border-t ${
                       msg.sender === 'user'
-                        ? 'text-emerald-100/70 border-emerald-500/30'
-                        : 'text-zinc-500 border-zinc-800/70'
+                        ? 'text-emerald-100/70 border-emerald-400/30'
+                        : 'text-zinc-500 border-white/5'
                     }`}
                   >
                     <div className="flex items-center gap-1.5">
@@ -713,7 +724,7 @@ What would you like to explore or work on today? Feel free to ask for advice on 
                 </div>
 
                 {msg.sender === 'user' && (
-                  <div className="w-7 h-7 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-300 shrink-0 mt-0.5">
+                  <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-zinc-800 to-zinc-900 border border-white/10 flex items-center justify-center text-zinc-200 shrink-0 mt-0.5 shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
                     <User className="w-3.5 h-3.5" />
                   </div>
                 )}
@@ -724,13 +735,13 @@ What would you like to explore or work on today? Feel free to ask for advice on 
           </div>
 
           {/* Bottom Message Input Bar */}
-          <div className="pt-2 pb-1 border-t border-zinc-800/80 shrink-0 bg-zinc-950/80 backdrop-blur-md">
+          <div className="pt-2.5 pb-1 border-t border-white/5 shrink-0 bg-[#0c0e14]/90 backdrop-blur-md">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
                 handleSendMessage();
               }}
-              className="flex items-end gap-1.5 sm:gap-2 bg-zinc-900/90 border border-zinc-800/80 rounded-2xl p-1.5 focus-within:border-emerald-500/60 transition shadow-lg"
+              className="flex items-end gap-2 clay-card p-2 rounded-2xl focus-within:border-emerald-500/50 transition shadow-2xl"
             >
               <textarea
                 ref={inputRef}
@@ -748,14 +759,14 @@ What would you like to explore or work on today? Feel free to ask for advice on 
                 }}
                 placeholder="Ask your AI Mentor..."
                 disabled={isStreaming}
-                className="flex-1 px-3 py-2 bg-transparent text-zinc-100 placeholder-zinc-500 text-xs md:text-sm focus:outline-none resize-none no-scrollbar hide-scrollbar overflow-y-auto min-h-[38px] max-h-28 sm:max-h-32 leading-relaxed"
+                className="flex-1 px-3 py-2 bg-transparent text-white placeholder-zinc-500 text-xs md:text-sm focus:outline-none resize-none no-scrollbar hide-scrollbar overflow-y-auto min-h-[38px] max-h-28 sm:max-h-32 leading-relaxed"
               />
 
               {isStreaming ? (
                 <button
                   type="button"
                   onClick={handleStopStreaming}
-                  className="p-2.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl transition cursor-pointer shrink-0 shadow-xs flex items-center justify-center"
+                  className="p-2.5 clay-btn-danger rounded-xl transition cursor-pointer shrink-0 flex items-center justify-center"
                   title="Stop generating"
                 >
                   <Square className="w-4 h-4 fill-white" />
@@ -764,7 +775,7 @@ What would you like to explore or work on today? Feel free to ask for advice on 
                 <button
                   type="submit"
                   disabled={!inputText.trim()}
-                  className="p-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0 shadow-xs flex items-center justify-center"
+                  className="p-2.5 clay-btn-primary rounded-xl transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0 flex items-center justify-center"
                   title="Send message"
                 >
                   <Send className="w-4 h-4" />
@@ -772,24 +783,24 @@ What would you like to explore or work on today? Feel free to ask for advice on 
               )}
             </form>
 
-            <div className="flex items-center justify-between text-[10px] text-zinc-500 mt-1 px-1">
+            <div className="flex items-center justify-between text-[10px] text-zinc-500 mt-1 px-1 font-medium">
               <span>Shift+Enter for newline</span>
-              <span className="text-zinc-500">DayTrace Contextual AI</span>
+              <span className="text-zinc-400 font-mono">DayTrace Contextual AI</span>
             </div>
           </div>
         </div>
       ) : (
         /* Weekly Review Mode Tab */
         <div className="flex-1 overflow-y-auto space-y-4 pr-1 no-scrollbar scrollbar-none pt-2 min-h-0">
-          <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+          <div className="p-5 clay-card flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
                 <CalendarRange className="w-5 h-5 text-emerald-400" />
-                <h2 className="text-sm md:text-base font-bold text-zinc-100">
+                <h2 className="text-sm md:text-base font-extrabold text-white">
                   Evidence-Based Weekly Performance Audit
                 </h2>
               </div>
-              <p className="text-xs text-zinc-400 mt-1">
+              <p className="text-xs text-zinc-400 mt-1 font-medium">
                 Computed strictly from your authentic recorded tasks, focus timers, habit streaks, and distraction boundaries.
               </p>
             </div>
@@ -797,7 +808,7 @@ What would you like to explore or work on today? Feel free to ask for advice on 
             <button
               onClick={handleTriggerWeeklyReview}
               disabled={isGeneratingWeekly}
-              className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 shadow-xs disabled:opacity-50 shrink-0"
+              className="clay-btn-primary px-4 py-2.5 text-xs font-bold transition flex items-center justify-center gap-2 disabled:opacity-50 shrink-0"
             >
               <BrainCircuit className="w-4 h-4" />
               <span>{isGeneratingWeekly ? 'Analyzing 7-Day Logs...' : 'Generate New Weekly Audit'}</span>
@@ -806,79 +817,79 @@ What would you like to explore or work on today? Feel free to ask for advice on 
 
           {/* New User Unlock / Progress Meter when < 7 days recorded */}
           {activeDaysCount < 7 && !weeklyReportData && (
-            <div className="p-5 bg-zinc-900/90 border border-zinc-800 rounded-2xl space-y-4 shadow-sm">
+            <div className="p-5 sm:p-6 clay-card space-y-4">
               <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-950/60 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl clay-inset flex items-center justify-center text-emerald-400">
                     <Clock className="w-4 h-4" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-sm text-zinc-100">
+                    <h3 className="font-extrabold text-sm text-white">
                       Weekly Audit Progress: {activeDaysCount} of 7 Days Recorded
                     </h3>
-                    <p className="text-xs text-zinc-400">
+                    <p className="text-xs text-zinc-400 font-medium">
                       Your full weekly review unlocks after recording 7 days of genuine daily plans and focus sessions.
                     </p>
                   </div>
                 </div>
-                <span className="text-xs font-mono font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2.5 py-1 rounded-lg">
+                <span className="clay-pill-emerald text-xs font-mono font-bold px-3 py-1">
                   {Math.round((activeDaysCount / 7) * 100)}%
                 </span>
               </div>
 
               {/* Progress bar */}
-              <div className="w-full bg-zinc-800 rounded-full h-2 overflow-hidden">
+              <div className="w-full clay-inset rounded-full h-2.5 overflow-hidden p-0.5">
                 <div
-                  className="bg-emerald-500 h-full rounded-full transition-all duration-500"
+                  className="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"
                   style={{ width: `${Math.max(5, Math.min(100, (activeDaysCount / 7) * 100))}%` }}
                 />
               </div>
 
               {/* Breakdown of 10 Analysis Dimensions */}
-              <div className="pt-2 border-t border-zinc-800/80 space-y-2">
-                <div className="text-[11px] font-semibold uppercase text-zinc-400 tracking-wider">
+              <div className="pt-3 border-t border-white/5 space-y-2.5">
+                <div className="text-[11px] font-bold uppercase text-zinc-400 tracking-wider">
                   The 10 Dimensions Analyzed in Your Weekly Review:
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-zinc-300">
-                  <div className="p-2.5 bg-zinc-950/60 border border-zinc-800/60 rounded-xl flex items-center gap-2">
+                  <div className="p-2.5 clay-card-sm flex items-center gap-2">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                    <span>1. Weekly Executive Overview</span>
+                    <span className="font-medium">1. Weekly Executive Overview</span>
                   </div>
-                  <div className="p-2.5 bg-zinc-950/60 border border-zinc-800/60 rounded-xl flex items-center gap-2">
+                  <div className="p-2.5 clay-card-sm flex items-center gap-2">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                    <span>2. Deep Work & Focus Analysis</span>
+                    <span className="font-medium">2. Deep Work & Focus Analysis</span>
                   </div>
-                  <div className="p-2.5 bg-zinc-950/60 border border-zinc-800/60 rounded-xl flex items-center gap-2">
+                  <div className="p-2.5 clay-card-sm flex items-center gap-2">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                    <span>3. Task & Goal Execution Rate</span>
+                    <span className="font-medium">3. Task & Goal Execution Rate</span>
                   </div>
-                  <div className="p-2.5 bg-zinc-950/60 border border-zinc-800/60 rounded-xl flex items-center gap-2">
+                  <div className="p-2.5 clay-card-sm flex items-center gap-2">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                    <span>4. Interruptions & Unplanned Duties</span>
+                    <span className="font-medium">4. Interruptions & Unplanned Duties</span>
                   </div>
-                  <div className="p-2.5 bg-zinc-950/60 border border-zinc-800/60 rounded-xl flex items-center gap-2">
+                  <div className="p-2.5 clay-card-sm flex items-center gap-2">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                    <span>5. Routine & Habit Consistency</span>
+                    <span className="font-medium">5. Routine & Habit Consistency</span>
                   </div>
-                  <div className="p-2.5 bg-zinc-950/60 border border-zinc-800/60 rounded-xl flex items-center gap-2">
+                  <div className="p-2.5 clay-card-sm flex items-center gap-2">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                    <span>6. Recurring Productivity Patterns</span>
+                    <span className="font-medium">6. Recurring Productivity Patterns</span>
                   </div>
-                  <div className="p-2.5 bg-zinc-950/60 border border-zinc-800/60 rounded-xl flex items-center gap-2">
+                  <div className="p-2.5 clay-card-sm flex items-center gap-2">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                    <span>7. Evidence-Based Wins</span>
+                    <span className="font-medium">7. Evidence-Based Wins</span>
                   </div>
-                  <div className="p-2.5 bg-zinc-950/60 border border-zinc-800/60 rounded-xl flex items-center gap-2">
+                  <div className="p-2.5 clay-card-sm flex items-center gap-2">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                    <span>8. Identified Challenges & Leaks</span>
+                    <span className="font-medium">8. Identified Challenges & Leaks</span>
                   </div>
-                  <div className="p-2.5 bg-zinc-950/60 border border-zinc-800/60 rounded-xl flex items-center gap-2">
+                  <div className="p-2.5 clay-card-sm flex items-center gap-2">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                    <span>9. Actionable Next Steps</span>
+                    <span className="font-medium">9. Actionable Next Steps</span>
                   </div>
-                  <div className="p-2.5 bg-zinc-950/60 border border-zinc-800/60 rounded-xl flex items-center gap-2">
+                  <div className="p-2.5 clay-card-sm flex items-center gap-2">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                    <span>10. Next Week Strategic Focus</span>
+                    <span className="font-medium">10. Next Week Strategic Focus</span>
                   </div>
                 </div>
               </div>
@@ -889,25 +900,25 @@ What would you like to explore or work on today? Feel free to ask for advice on 
           {weeklyReportData ? (
             <div className="space-y-4">
               {/* Score & Executive Overview */}
-              <div className="p-5 bg-zinc-900 border border-emerald-500/40 rounded-2xl space-y-3 shadow-lg">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-800 pb-3">
+              <div className="p-5 sm:p-6 clay-card border-emerald-500/40 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/5 pb-3">
                   <div className="flex items-center gap-2">
                     <BrainCircuit className="w-5 h-5 text-emerald-400" />
                     <div>
-                      <h3 className="font-bold text-sm text-zinc-100">1. Weekly Executive Overview</h3>
-                      <p className="text-[11px] text-zinc-400">Authentic evidence-based evaluation</p>
+                      <h3 className="font-extrabold text-sm text-white">1. Weekly Executive Overview</h3>
+                      <p className="text-[11px] text-zinc-400 font-medium">Authentic evidence-based evaluation</p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <span className="text-zinc-400 text-xs">Performance Score:</span>
-                    <span className="px-3 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 rounded-full font-bold text-sm">
+                    <span className="text-zinc-400 text-xs font-semibold">Performance Score:</span>
+                    <span className="clay-pill-emerald px-3.5 py-1 text-sm font-extrabold">
                       {weeklyReportData.score || 85} / 100 ({weeklyReportData.scoreGrade || 'B+'})
                     </span>
                   </div>
                 </div>
 
-                <p className="text-xs md:text-sm text-zinc-200 leading-relaxed italic bg-zinc-800/60 p-3.5 rounded-xl border border-zinc-700/50">
+                <p className="text-xs md:text-sm text-zinc-200 leading-relaxed italic clay-inset p-4 rounded-xl border border-white/5 font-medium">
                   &ldquo;{weeklyReportData.weeklyOverview || weeklyReportData.summary}&rdquo;
                 </p>
               </div>
@@ -915,22 +926,22 @@ What would you like to explore or work on today? Feel free to ask for advice on 
               {/* 2 & 3: Deep Work Focus & Task Execution */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* 2. Deep Work Analysis */}
-                <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-xl space-y-2.5">
-                  <div className="font-bold text-emerald-400 flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
+                <div className="p-5 clay-card space-y-3">
+                  <div className="font-extrabold text-emerald-400 flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
                     <Clock className="w-4 h-4" />
                     <span>2. Deep Work & Focus Time</span>
                   </div>
                   {weeklyReportData.focusAnalysis ? (
                     <div className="space-y-2 text-xs text-zinc-300">
-                      <div className="flex justify-between py-1 border-b border-zinc-800/80">
-                        <span className="text-zinc-400">Total Focus Time:</span>
+                      <div className="flex justify-between py-1.5 border-b border-white/5">
+                        <span className="text-zinc-400 font-medium">Total Focus Time:</span>
                         <span className="font-mono font-bold text-emerald-400">{weeklyReportData.focusAnalysis.totalFocusHours}h</span>
                       </div>
-                      <div className="flex justify-between py-1 border-b border-zinc-800/80">
-                        <span className="text-zinc-400">Recorded Sessions:</span>
-                        <span className="font-mono">{weeklyReportData.focusAnalysis.sessionCount}</span>
+                      <div className="flex justify-between py-1.5 border-b border-white/5">
+                        <span className="text-zinc-400 font-medium">Recorded Sessions:</span>
+                        <span className="font-mono font-bold text-white">{weeklyReportData.focusAnalysis.sessionCount}</span>
                       </div>
-                      <p className="text-zinc-300 text-[11px] leading-relaxed pt-1">
+                      <p className="text-zinc-300 text-[11px] leading-relaxed pt-1 font-medium">
                         {weeklyReportData.focusAnalysis.insight}
                       </p>
                     </div>
@@ -940,22 +951,22 @@ What would you like to explore or work on today? Feel free to ask for advice on 
                 </div>
 
                 {/* 3. Task & Goal Execution */}
-                <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-xl space-y-2.5">
-                  <div className="font-bold text-emerald-400 flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
+                <div className="p-5 clay-card space-y-3">
+                  <div className="font-extrabold text-emerald-400 flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
                     <Target className="w-4 h-4" />
                     <span>3. Task & Goal Execution</span>
                   </div>
                   {weeklyReportData.taskAnalysis ? (
                     <div className="space-y-2 text-xs text-zinc-300">
-                      <div className="flex justify-between py-1 border-b border-zinc-800/80">
-                        <span className="text-zinc-400">Completed Tasks:</span>
-                        <span className="font-mono font-bold text-zinc-100">{weeklyReportData.taskAnalysis.completedCount}</span>
+                      <div className="flex justify-between py-1.5 border-b border-white/5">
+                        <span className="text-zinc-400 font-medium">Completed Tasks:</span>
+                        <span className="font-mono font-bold text-white">{weeklyReportData.taskAnalysis.completedCount}</span>
                       </div>
-                      <div className="flex justify-between py-1 border-b border-zinc-800/80">
-                        <span className="text-zinc-400">Execution Rate:</span>
+                      <div className="flex justify-between py-1.5 border-b border-white/5">
+                        <span className="text-zinc-400 font-medium">Execution Rate:</span>
                         <span className="font-mono font-bold text-emerald-400">{weeklyReportData.taskAnalysis.executionRate}%</span>
                       </div>
-                      <p className="text-zinc-300 text-[11px] leading-relaxed pt-1">
+                      <p className="text-zinc-300 text-[11px] leading-relaxed pt-1 font-medium">
                         {weeklyReportData.taskAnalysis.insight}
                       </p>
                     </div>
@@ -968,23 +979,23 @@ What would you like to explore or work on today? Feel free to ask for advice on 
               {/* 4, 5, 6: Interruptions, Consistency, Patterns */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* 4. Interruptions */}
-                <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-xl space-y-2">
-                  <div className="font-bold text-amber-400 flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
+                <div className="p-4 sm:p-5 clay-card space-y-2">
+                  <div className="font-extrabold text-amber-400 flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
                     <ShieldAlert className="w-4 h-4" />
                     <span>4. Life & Interruptions</span>
                   </div>
-                  <p className="text-xs text-zinc-300 leading-relaxed">
+                  <p className="text-xs text-zinc-300 leading-relaxed font-medium">
                     {weeklyReportData.interruptionAnalysis?.impactSummary || 'Handled unplanned commitments with steady composure.'}
                   </p>
                 </div>
 
                 {/* 5. Routine Consistency */}
-                <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-xl space-y-2">
-                  <div className="font-bold text-emerald-400 flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
+                <div className="p-4 sm:p-5 clay-card space-y-2">
+                  <div className="font-extrabold text-emerald-400 flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
                     <Flame className="w-4 h-4" />
                     <span>5. Routine Adherence</span>
                   </div>
-                  <p className="text-xs text-zinc-300 leading-relaxed">
+                  <p className="text-xs text-zinc-300 leading-relaxed font-medium">
                     {weeklyReportData.consistency?.strongestPattern
                       ? `Strength: ${weeklyReportData.consistency.strongestPattern}. Active days: ${weeklyReportData.consistency.activeDaysCount || 5}/7.`
                       : 'Maintained authentic habit logging across planned days.'}
@@ -992,16 +1003,16 @@ What would you like to explore or work on today? Feel free to ask for advice on 
                 </div>
 
                 {/* 6. Productivity Patterns */}
-                <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-xl space-y-2">
-                  <div className="font-bold text-sky-400 flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
+                <div className="p-4 sm:p-5 clay-card space-y-2">
+                  <div className="font-extrabold text-sky-400 flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
                     <TrendingUp className="w-4 h-4" />
                     <span>6. Repeated Patterns</span>
                   </div>
-                  <ul className="space-y-1 text-xs text-zinc-300">
+                  <ul className="space-y-1 text-xs text-zinc-300 font-medium">
                     {(weeklyReportData.productivityPatterns || weeklyReportData.patterns || ['Consistent focus during uninterrupted morning windows.']).map(
                       (pat: string, idx: number) => (
                         <li key={idx} className="flex items-start gap-1.5">
-                          <span className="text-sky-400">•</span>
+                          <span className="text-sky-400 font-bold">•</span>
                           <span>{pat}</span>
                         </li>
                       )
@@ -1013,12 +1024,12 @@ What would you like to explore or work on today? Feel free to ask for advice on 
               {/* 7 & 8: Wins and Challenges */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* 7. Wins */}
-                <div className="p-4 bg-emerald-950/20 border border-emerald-500/30 rounded-xl space-y-2">
-                  <div className="font-bold text-emerald-400 flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
+                <div className="p-5 clay-card border-emerald-500/30 space-y-2.5">
+                  <div className="font-extrabold text-emerald-400 flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
                     <Award className="w-4 h-4" />
                     <span>7. What Went Well (Wins)</span>
                   </div>
-                  <ul className="space-y-1.5 text-xs text-zinc-200">
+                  <ul className="space-y-2 text-xs text-zinc-200 font-medium">
                     {(weeklyReportData.wins || []).map((win: string, i: number) => (
                       <li key={i} className="flex items-start gap-2">
                         <span className="text-emerald-400 font-bold">•</span>
@@ -1029,12 +1040,12 @@ What would you like to explore or work on today? Feel free to ask for advice on 
                 </div>
 
                 {/* 8. Challenges */}
-                <div className="p-4 bg-rose-950/20 border border-rose-500/30 rounded-xl space-y-2">
-                  <div className="font-bold text-rose-400 flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
+                <div className="p-5 clay-card border-rose-500/30 space-y-2.5">
+                  <div className="font-extrabold text-rose-400 flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
                     <AlertTriangle className="w-4 h-4" />
                     <span>8. Identified Challenges & Leaks</span>
                   </div>
-                  <ul className="space-y-1.5 text-xs text-zinc-200">
+                  <ul className="space-y-2 text-xs text-zinc-200 font-medium">
                     {(weeklyReportData.challenges || weeklyReportData.problems || []).map((prob: string, i: number) => (
                       <li key={i} className="flex items-start gap-2">
                         <span className="text-rose-400 font-bold">•</span>
@@ -1046,26 +1057,26 @@ What would you like to explore or work on today? Feel free to ask for advice on 
               </div>
 
               {/* 9 & 10: Actionable Recommendations & Next Week Focus */}
-              <div className="p-5 bg-zinc-900 border border-zinc-800 rounded-2xl space-y-3">
-                <div className="font-bold text-zinc-100 flex items-center gap-2 uppercase tracking-wider text-xs">
+              <div className="p-5 sm:p-6 clay-card space-y-3.5">
+                <div className="font-extrabold text-white flex items-center gap-2 uppercase tracking-wider text-xs">
                   <TrendingUp className="w-4 h-4 text-emerald-400" />
                   <span>9. High-Leverage Recommendations</span>
                 </div>
-                <ul className="space-y-2 text-xs text-zinc-200">
+                <ul className="space-y-2.5 text-xs text-zinc-200">
                   {(weeklyReportData.recommendations || []).map((rec: string, i: number) => (
-                    <li key={i} className="flex items-start gap-2.5 p-2 bg-zinc-800/40 rounded-lg border border-zinc-700/40">
-                      <span className="text-emerald-400 font-bold font-mono min-w-[16px]">{i + 1}.</span>
-                      <span>{rec}</span>
+                    <li key={i} className="flex items-start gap-2.5 p-3 clay-card-sm">
+                      <span className="text-emerald-400 font-extrabold font-mono min-w-[16px]">{i + 1}.</span>
+                      <span className="font-medium leading-relaxed">{rec}</span>
                     </li>
                   ))}
                 </ul>
 
                 {/* 10. Next Week Focus */}
-                <div className="pt-3 border-t border-zinc-800 flex items-center justify-between gap-2">
+                <div className="pt-3.5 border-t border-white/5 flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <Target className="w-4 h-4 text-emerald-400" />
-                    <span className="text-xs font-bold text-zinc-200">10. Next Week Strategic Focus:</span>
-                    <span className="text-xs text-emerald-300 font-medium">{weeklyReportData.nextWeekFocus}</span>
+                    <span className="text-xs font-extrabold text-white">10. Next Week Strategic Focus:</span>
+                    <span className="text-xs text-emerald-300 font-bold">{weeklyReportData.nextWeekFocus}</span>
                   </div>
                 </div>
               </div>

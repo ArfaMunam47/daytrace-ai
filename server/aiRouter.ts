@@ -29,25 +29,25 @@ export const AI_MODELS: ModelDefinition[] = [
     id: 'gemini-2.5-flash',
     label: 'Primary (Gemini 2.5 Flash - Fast)',
     priority: 1,
-    timeoutMs: 8000,
+    timeoutMs: 25000,
     supportsJson: true,
-    maxRetriesOnTransient: 0,
+    maxRetriesOnTransient: 1,
   },
   {
     id: 'gemini-3.7-flash',
     label: 'Fallback 1 (Gemini 3.7 Flash)',
     priority: 2,
-    timeoutMs: 8000,
+    timeoutMs: 30000,
     supportsJson: true,
-    maxRetriesOnTransient: 0,
+    maxRetriesOnTransient: 1,
   },
   {
     id: 'gemini-2.5-flash-lite',
     label: 'Fallback 2 (Gemini 2.5 Flash Lite)',
     priority: 3,
-    timeoutMs: 6000,
+    timeoutMs: 20000,
     supportsJson: true,
-    maxRetriesOnTransient: 0,
+    maxRetriesOnTransient: 1,
   },
 ];
 
@@ -813,7 +813,7 @@ export async function generateAIContentStream(
         }
 
         // Timeout race for initiating the stream
-        const streamTimeoutMs = Math.min(modelDef.timeoutMs, 8000);
+        const streamTimeoutMs = Math.min(modelDef.timeoutMs, 20000);
         let streamTimer: any;
         const timeoutPromise = new Promise<never>((_, reject) => {
           streamTimer = setTimeout(() => {

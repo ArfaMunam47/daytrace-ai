@@ -60,38 +60,43 @@ export const InterruptionModal: React.FC<InterruptionModalProps> = ({ isOpen, on
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="bg-zinc-900 border border-purple-500/40 rounded-xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="clay-modal w-full max-w-lg border-purple-500/30 overflow-hidden animate-in fade-in duration-200">
         {/* Header */}
-        <div className="px-5 py-4 border-b border-zinc-800 bg-purple-950/20 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-purple-400" />
-            <h3 className="font-semibold text-zinc-100 text-sm">Record Real-Life Interruption</h3>
+        <div className="px-6 py-4.5 border-b border-white/5 bg-gradient-to-r from-purple-950/40 to-transparent flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-purple-700 border border-white/30 flex items-center justify-center text-white shadow-[0_2px_8px_rgba(168,85,247,0.4),inset_0_1px_1px_rgba(255,255,255,0.4)]">
+              <AlertCircle className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="font-bold text-white text-base">Record Real-Life Interruption</h3>
+              <p className="text-[11px] text-zinc-400">Honest logging without shame</p>
+            </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition"
+            className="p-1.5 rounded-xl text-zinc-400 hover:text-white hover:bg-white/5 transition cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Philosophy Card Banner */}
-        <div className="px-5 pt-4">
-          <div className="p-3 bg-purple-950/30 border border-purple-500/30 rounded-lg flex items-start gap-2.5">
+        <div className="px-6 pt-5">
+          <div className="p-3.5 bg-gradient-to-r from-purple-950/50 to-[#1e172a] border border-purple-500/30 rounded-2xl flex items-start gap-3 shadow-[inset_0_1px_1px_rgba(255,255,255,0.08)]">
             <HeartHandshake className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
             <div className="text-[11px] text-purple-200 leading-relaxed">
-              <span className="font-semibold text-purple-300">Not a failure.</span> Life, family, and home responsibilities are essential parts of living. Recording them helps you know where your hours went without unrealistic guilt.
+              <span className="font-bold text-purple-300">Not a failure.</span> Life, family, and home responsibilities are essential parts of living. Recording them helps you know where your hours went without unrealistic guilt.
             </div>
           </div>
         </div>
 
         {/* Content Form */}
-        <form onSubmit={handleSubmit} className="p-5 space-y-4 text-xs">
+        <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs">
           {/* Interruption Types */}
           <div>
-            <label className="block text-zinc-400 font-medium mb-1.5">Interruption Type</label>
-            <div className="grid grid-cols-2 gap-1.5">
+            <label className="block text-zinc-300 font-semibold mb-2">Interruption Type</label>
+            <div className="grid grid-cols-2 gap-2">
               {INTERRUPTION_TYPES.map((item) => {
                 const isSelected = selectedType === item.type;
                 return (
@@ -99,14 +104,14 @@ export const InterruptionModal: React.FC<InterruptionModalProps> = ({ isOpen, on
                     type="button"
                     key={item.type}
                     onClick={() => handleSelectType(item)}
-                    className={`flex items-center gap-2 p-2 rounded-lg text-left transition border ${
+                    className={`flex items-center gap-2 p-2.5 rounded-2xl text-left transition cursor-pointer ${
                       isSelected
-                        ? 'bg-purple-950/60 border-purple-500/70 text-purple-200 font-medium'
-                        : 'bg-zinc-800/60 border-zinc-700/40 text-zinc-300 hover:bg-zinc-800'
+                        ? 'clay-pill-purple font-bold'
+                        : 'clay-card-interactive text-zinc-300 hover:text-white'
                     }`}
                   >
-                    <span>{item.icon}</span>
-                    <span className="truncate">{item.label}</span>
+                    <span className="text-base">{item.icon}</span>
+                    <span className="truncate text-xs font-medium">{item.label}</span>
                   </button>
                 );
               })}
@@ -115,20 +120,20 @@ export const InterruptionModal: React.FC<InterruptionModalProps> = ({ isOpen, on
 
           {/* Description */}
           <div>
-            <label className="block text-zinc-400 font-medium mb-1">Activity Label</label>
+            <label className="block text-zinc-300 font-semibold mb-1">Activity Label</label>
             <input
               type="text"
               required
               value={activityName}
               onChange={(e) => setActivityName(e.target.value)}
-              className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-purple-500 text-xs"
+              className="clay-input w-full px-3.5 py-2.5 text-white placeholder-zinc-500 focus:outline-none text-xs font-medium"
             />
           </div>
 
           {/* Duration Chips */}
           <div>
-            <label className="block text-zinc-400 font-medium mb-1.5">Time Consumed</label>
-            <div className="flex flex-wrap items-center gap-1.5">
+            <label className="block text-zinc-300 font-semibold mb-1.5">Time Consumed</label>
+            <div className="flex flex-wrap items-center gap-2">
               {PRESET_MINUTES.map((dur) => (
                 <button
                   type="button"
@@ -137,10 +142,10 @@ export const InterruptionModal: React.FC<InterruptionModalProps> = ({ isOpen, on
                     setDuration(dur);
                     setCustomDuration('');
                   }}
-                  className={`py-1 px-2.5 rounded-lg font-medium transition border ${
+                  className={`py-1.5 px-3 rounded-xl font-bold transition cursor-pointer text-xs ${
                     duration === dur && !customDuration
-                      ? 'bg-purple-600 border-purple-500 text-white'
-                      : 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-750'
+                      ? 'clay-btn-purple text-white'
+                      : 'clay-btn-secondary text-zinc-300'
                   }`}
                 >
                   {dur >= 60 ? `${dur / 60}h` : `${dur}m`}
@@ -153,45 +158,45 @@ export const InterruptionModal: React.FC<InterruptionModalProps> = ({ isOpen, on
                 placeholder="Custom (m)"
                 value={customDuration}
                 onChange={(e) => setCustomDuration(e.target.value)}
-                className="w-24 px-2 py-1 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100 text-xs focus:outline-none focus:border-purple-500"
+                className="clay-input w-28 px-3 py-1.5 text-white text-xs font-semibold focus:outline-none"
               />
             </div>
           </div>
 
           {/* Notes */}
           <div>
-            <label className="block text-zinc-400 font-medium mb-1">Context / Notes (Optional)</label>
+            <label className="block text-zinc-300 font-semibold mb-1">Context / Notes (Optional)</label>
             <input
               type="text"
               placeholder="e.g. Cleaned kitchen & handled grocery delivery..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-purple-500 text-xs"
+              className="clay-input w-full px-3.5 py-2.5 text-white placeholder-zinc-500 focus:outline-none text-xs"
             />
           </div>
 
           {/* Footer */}
-          <div className="pt-2 flex items-center justify-end gap-2 border-t border-zinc-800">
+          <div className="pt-3 flex items-center justify-end gap-2.5 border-t border-white/5">
             <button
               type="button"
               onClick={onClose}
-              className="px-3 py-2 text-zinc-400 hover:text-zinc-200 rounded-lg transition"
+              className="clay-btn-secondary px-4 py-2 text-xs"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSaved}
-              className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-medium transition shadow-sm flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              className="clay-btn-purple px-5 py-2 text-xs font-bold flex items-center gap-2 disabled:opacity-50"
             >
               {isSaved ? (
                 <>
-                  <Check className="w-3.5 h-3.5" />
+                  <Check className="w-4 h-4" />
                   <span>Recorded!</span>
                 </>
               ) : (
                 <>
-                  <Check className="w-3.5 h-3.5" />
+                  <Check className="w-4 h-4" />
                   <span>Record Responsibility</span>
                 </>
               )}

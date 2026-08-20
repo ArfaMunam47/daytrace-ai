@@ -1,18 +1,13 @@
 import React, { useState } from 'react';
 import {
-  Target,
-  FolderKanban,
   Plus,
   Trash2,
-  Edit2,
   CheckCircle2,
   Clock,
   Calendar,
-  Sparkles,
-  TrendingUp,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
-import { Goal, Project, ActivityCategory } from '../../types';
+import { ActivityCategory } from '../../types';
 import { formatMinutes, formatReadableDate } from '../../utils/dateUtils';
 
 export const GoalsProjectsView: React.FC = () => {
@@ -33,7 +28,7 @@ export const GoalsProjectsView: React.FC = () => {
   const [showGoalModal, setShowGoalModal] = useState(false);
   const [goalName, setGoalName] = useState('');
   const [goalDesc, setGoalDesc] = useState('');
-  const [goalCategory, setGoalCategory] = useState<ActivityCategory>('PRODUCTIVE');
+  const [goalCategory] = useState<ActivityCategory>('PRODUCTIVE');
   const [goalTargetHours, setGoalTargetHours] = useState(50);
   const [goalPriority, setGoalPriority] = useState<'high' | 'medium' | 'low'>('high');
 
@@ -83,37 +78,37 @@ export const GoalsProjectsView: React.FC = () => {
   return (
     <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-6 animate-in fade-in duration-200">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-zinc-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/5">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl md:text-2xl font-bold text-zinc-100 tracking-tight">
+            <h1 className="text-xl md:text-2xl font-extrabold text-white tracking-tight">
               Goals & High-Leverage Projects
             </h1>
           </div>
-          <p className="text-xs text-zinc-400 mt-1">
+          <p className="text-xs text-zinc-400 mt-1 font-medium">
             Tie your daily minutes directly to long-term compounding milestones.
           </p>
         </div>
 
         {/* Tab Switcher & Add Button */}
-        <div className="flex items-center gap-2">
-          <div className="bg-zinc-900 border border-zinc-800 p-1 rounded-lg flex items-center gap-1 text-xs">
+        <div className="flex items-center gap-2.5">
+          <div className="clay-card-sm p-1 flex items-center gap-1 text-xs">
             <button
               onClick={() => setActiveTab('goals')}
-              className={`px-3 py-1 rounded-md font-medium transition cursor-pointer ${
+              className={`px-3 py-1.5 rounded-xl font-bold transition cursor-pointer ${
                 activeTab === 'goals'
-                  ? 'bg-zinc-800 text-emerald-400 font-semibold shadow-xs'
-                  : 'text-zinc-400 hover:text-zinc-200'
+                  ? 'clay-nav-active text-emerald-300'
+                  : 'text-zinc-400 hover:text-white'
               }`}
             >
               Goals ({goals.length})
             </button>
             <button
               onClick={() => setActiveTab('projects')}
-              className={`px-3 py-1 rounded-md font-medium transition cursor-pointer ${
+              className={`px-3 py-1.5 rounded-xl font-bold transition cursor-pointer ${
                 activeTab === 'projects'
-                  ? 'bg-zinc-800 text-blue-400 font-semibold shadow-xs'
-                  : 'text-zinc-400 hover:text-zinc-200'
+                  ? 'clay-nav-active text-blue-300'
+                  : 'text-zinc-400 hover:text-white'
               }`}
             >
               Projects ({projects.length})
@@ -122,7 +117,7 @@ export const GoalsProjectsView: React.FC = () => {
 
           <button
             onClick={() => (activeTab === 'goals' ? setShowGoalModal(true) : setShowProjectModal(true))}
-            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-medium transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+            className="clay-btn-primary px-4 py-2 text-xs font-bold flex items-center gap-1.5"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Add {activeTab === 'goals' ? 'Goal' : 'Project'}</span>
@@ -141,56 +136,58 @@ export const GoalsProjectsView: React.FC = () => {
               return (
                 <div
                   key={goal.id}
-                  className="p-5 bg-zinc-900 border border-zinc-800 rounded-xl space-y-3.5 text-xs shadow-xs"
+                  className="p-5 sm:p-6 clay-card-interactive space-y-4 text-xs flex flex-col justify-between"
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-sm text-zinc-100">{goal.name}</span>
-                        <span
-                          className={`text-[10px] px-1.5 py-0.2 rounded font-medium ${
-                            goal.status === 'completed'
-                              ? 'bg-emerald-500/20 text-emerald-300'
-                              : 'bg-zinc-800 text-zinc-400'
-                          }`}
-                        >
-                          {goal.status.replace('_', ' ')}
-                        </span>
-                      </div>
-                      <p className="text-zinc-400 text-xs mt-1">{goal.description}</p>
-                    </div>
-
-                    <button
-                      onClick={() => deleteGoal(goal.id)}
-                      className="text-zinc-500 hover:text-rose-400 transition"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-
-                  {/* Progress Gauge */}
                   <div>
-                    <div className="flex items-center justify-between text-[11px] text-zinc-400 mb-1 font-mono">
-                      <span>Invested: {currentHours}h</span>
-                      <span>Target: {goal.targetHours}h ({progressPct}%)</span>
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-sm text-white">{goal.name}</span>
+                          <span
+                            className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                              goal.status === 'completed'
+                                ? 'clay-pill-emerald'
+                                : 'clay-pill text-zinc-300'
+                            }`}
+                          >
+                            {goal.status.replace('_', ' ')}
+                          </span>
+                        </div>
+                        <p className="text-zinc-400 text-xs mt-1 font-medium">{goal.description}</p>
+                      </div>
+
+                      <button
+                        onClick={() => deleteGoal(goal.id)}
+                        className="clay-btn-secondary p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 transition"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
-                    <div className="w-full bg-zinc-800 h-2 rounded-full overflow-hidden">
-                      <div
-                        className="bg-emerald-500 h-full rounded-full transition-all duration-500"
-                        style={{ width: `${progressPct}%` }}
-                      />
+
+                    {/* Progress Gauge */}
+                    <div className="mt-4">
+                      <div className="flex items-center justify-between text-[11px] text-zinc-400 mb-1.5 font-mono font-medium">
+                        <span>Invested: {currentHours}h</span>
+                        <span>Target: {goal.targetHours}h ({progressPct}%)</span>
+                      </div>
+                      <div className="w-full clay-inset h-2 rounded-full overflow-hidden p-0.5">
+                        <div
+                          className="bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)] h-full rounded-full transition-all duration-500"
+                          style={{ width: `${progressPct}%` }}
+                        />
+                      </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between pt-1 border-t border-zinc-800/80 text-[11px]">
-                    <span className="text-zinc-400 capitalize">Priority: {goal.priority}</span>
+                  <div className="flex items-center justify-between pt-3 border-t border-white/5 text-[11px]">
+                    <span className="text-zinc-400 capitalize font-medium">Priority: {goal.priority}</span>
                     <button
                       onClick={() =>
                         updateGoal(goal.id, {
                           status: goal.status === 'completed' ? 'in_progress' : 'completed',
                         })
                       }
-                      className="text-emerald-400 hover:underline cursor-pointer flex items-center gap-1"
+                      className="text-emerald-400 hover:text-emerald-300 font-semibold cursor-pointer flex items-center gap-1.5 transition"
                     >
                       <CheckCircle2 className="w-3.5 h-3.5" />
                       <span>{goal.status === 'completed' ? 'Mark Active' : 'Mark Completed'}</span>
@@ -214,47 +211,49 @@ export const GoalsProjectsView: React.FC = () => {
               return (
                 <div
                   key={proj.id}
-                  className="p-5 bg-zinc-900 border border-zinc-800 rounded-xl space-y-3.5 text-xs shadow-xs"
+                  className="p-5 sm:p-6 clay-card-interactive space-y-4 text-xs flex flex-col justify-between"
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-sm text-zinc-100">{proj.name}</span>
-                        <span className="text-[10px] px-1.5 py-0.2 rounded font-medium bg-blue-950/60 text-blue-300 border border-blue-500/30">
-                          {proj.status}
-                        </span>
+                  <div>
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-sm text-white">{proj.name}</span>
+                          <span className="clay-pill-blue text-[10px] px-2 py-0.5 font-bold">
+                            {proj.status}
+                          </span>
+                        </div>
+                        <p className="text-zinc-400 text-xs mt-1 font-medium">{proj.description}</p>
                       </div>
-                      <p className="text-zinc-400 text-xs mt-1">{proj.description}</p>
+
+                      <button
+                        onClick={() => deleteProject(proj.id)}
+                        className="clay-btn-secondary p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 transition"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
 
-                    <button
-                      onClick={() => deleteProject(proj.id)}
-                      className="text-zinc-500 hover:text-rose-400 transition"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-
-                  <div className="flex items-center gap-3 text-zinc-400 text-[11px]">
-                    <div className="flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5 text-zinc-400" />
-                      <span className="font-mono text-zinc-200">{formatMinutes(totalMins)}</span>
-                    </div>
-                    {proj.deadline && (
+                    <div className="flex flex-wrap items-center gap-3 text-zinc-400 text-[11px] mt-3 font-medium">
                       <div className="flex items-center gap-1">
-                        <Calendar className="w-3.5 h-3.5 text-zinc-400" />
-                        <span>Deadline: {formatReadableDate(proj.deadline)}</span>
+                        <Clock className="w-3.5 h-3.5 text-zinc-400" />
+                        <span className="font-mono text-white font-bold">{formatMinutes(totalMins)}</span>
                       </div>
-                    )}
-                    {parentGoal && (
-                      <div className="text-emerald-400 truncate">
-                        🎯 {parentGoal.name}
-                      </div>
-                    )}
+                      {proj.deadline && (
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-3.5 h-3.5 text-zinc-400" />
+                          <span>Deadline: {formatReadableDate(proj.deadline)}</span>
+                        </div>
+                      )}
+                      {parentGoal && (
+                        <div className="text-emerald-400 truncate">
+                          🎯 {parentGoal.name}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="flex items-center justify-between pt-1 border-t border-zinc-800/80 text-[11px]">
-                    <span className="text-zinc-400">
+                  <div className="flex items-center justify-between pt-3 border-t border-white/5 text-[11px]">
+                    <span className="text-zinc-400 font-medium">
                       Created: {formatReadableDate(proj.createdAt.split('T')[0])}
                     </span>
                     <button
@@ -263,7 +262,7 @@ export const GoalsProjectsView: React.FC = () => {
                           status: proj.status === 'completed' ? 'active' : 'completed',
                         })
                       }
-                      className="text-blue-400 hover:underline cursor-pointer flex items-center gap-1"
+                      className="text-blue-400 hover:text-blue-300 font-semibold cursor-pointer flex items-center gap-1.5 transition"
                     >
                       <CheckCircle2 className="w-3.5 h-3.5" />
                       <span>{proj.status === 'completed' ? 'Reactivate' : 'Complete Project'}</span>
@@ -278,70 +277,70 @@ export const GoalsProjectsView: React.FC = () => {
 
       {/* Add Goal Modal */}
       {showGoalModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl w-full max-w-md shadow-2xl p-5 space-y-4 animate-in fade-in duration-200 text-xs">
-            <h3 className="font-semibold text-zinc-100 text-sm">Add High-Leverage Goal</h3>
-            <form onSubmit={handleAddGoal} className="space-y-3">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="clay-modal w-full max-w-md p-6 space-y-4 animate-in fade-in duration-200 text-xs">
+            <h3 className="font-extrabold text-white text-sm">Add High-Leverage Goal</h3>
+            <form onSubmit={handleAddGoal} className="space-y-3.5">
               <div>
-                <label className="block text-zinc-400 font-medium mb-1">Goal Title</label>
+                <label className="block text-zinc-300 font-semibold mb-1">Goal Title</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Master Distributed Systems & CS..."
                   value={goalName}
                   onChange={(e) => setGoalName(e.target.value)}
-                  className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100 placeholder-zinc-500 text-xs focus:outline-none focus:border-emerald-500"
+                  className="clay-input w-full px-3.5 py-2.5 text-white placeholder-zinc-500 text-xs focus:outline-none min-h-[38px]"
                 />
               </div>
 
               <div>
-                <label className="block text-zinc-400 font-medium mb-1">Description / Target Outcome</label>
+                <label className="block text-zinc-300 font-semibold mb-1">Description / Target Outcome</label>
                 <input
                   type="text"
                   placeholder="e.g. Build 3 deep architectural prototypes..."
                   value={goalDesc}
                   onChange={(e) => setGoalDesc(e.target.value)}
-                  className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100 placeholder-zinc-500 text-xs focus:outline-none focus:border-emerald-500"
+                  className="clay-input w-full px-3.5 py-2.5 text-white placeholder-zinc-500 text-xs focus:outline-none min-h-[38px]"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-zinc-400 font-medium mb-1">Target Hours</label>
+                  <label className="block text-zinc-300 font-semibold mb-1">Target Hours</label>
                   <input
                     type="number"
                     min="1"
                     max="1000"
                     value={goalTargetHours}
                     onChange={(e) => setGoalTargetHours(Number(e.target.value))}
-                    className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100 text-xs focus:outline-none focus:border-emerald-500"
+                    className="clay-input w-full px-3.5 py-2.5 text-white text-xs focus:outline-none min-h-[38px]"
                   />
                 </div>
                 <div>
-                  <label className="block text-zinc-400 font-medium mb-1">Priority</label>
+                  <label className="block text-zinc-300 font-semibold mb-1">Priority</label>
                   <select
                     value={goalPriority}
                     onChange={(e) => setGoalPriority(e.target.value as any)}
-                    className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-200 text-xs focus:outline-none focus:border-emerald-500"
+                    className="clay-input w-full px-3.5 py-2.5 text-zinc-200 text-xs focus:outline-none min-h-[38px] cursor-pointer"
                   >
-                    <option value="high">High</option>
-                    <option value="medium">Medium</option>
-                    <option value="low">Low</option>
+                    <option value="high" className="bg-[#141822] text-zinc-200">High</option>
+                    <option value="medium" className="bg-[#141822] text-zinc-200">Medium</option>
+                    <option value="low" className="bg-[#141822] text-zinc-200">Low</option>
                   </select>
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-zinc-800">
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-white/5">
                 <button
                   type="button"
                   onClick={() => setShowGoalModal(false)}
-                  className="px-3 py-1.5 text-zinc-400 hover:text-zinc-200"
+                  className="clay-btn-secondary px-4 py-2 text-xs"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded font-medium cursor-pointer"
+                  className="clay-btn-primary px-5 py-2 font-bold text-xs"
                 >
                   Create Goal
                 </button>
@@ -353,71 +352,71 @@ export const GoalsProjectsView: React.FC = () => {
 
       {/* Add Project Modal */}
       {showProjectModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl w-full max-w-md shadow-2xl p-5 space-y-4 animate-in fade-in duration-200 text-xs">
-            <h3 className="font-semibold text-zinc-100 text-sm">Add Project</h3>
-            <form onSubmit={handleAddProject} className="space-y-3">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="clay-modal w-full max-w-md p-6 space-y-4 animate-in fade-in duration-200 text-xs">
+            <h3 className="font-extrabold text-white text-sm">Add Project</h3>
+            <form onSubmit={handleAddProject} className="space-y-3.5">
               <div>
-                <label className="block text-zinc-400 font-medium mb-1">Project Name</label>
+                <label className="block text-zinc-300 font-semibold mb-1">Project Name</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. DayTrace MVP Launch..."
                   value={projName}
                   onChange={(e) => setProjName(e.target.value)}
-                  className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100 placeholder-zinc-500 text-xs focus:outline-none focus:border-blue-500"
+                  className="clay-input w-full px-3.5 py-2.5 text-white placeholder-zinc-500 text-xs focus:outline-none min-h-[38px]"
                 />
               </div>
 
               <div>
-                <label className="block text-zinc-400 font-medium mb-1">Description</label>
+                <label className="block text-zinc-300 font-semibold mb-1">Description</label>
                 <input
                   type="text"
                   placeholder="e.g. Production ready personal growth app..."
                   value={projDesc}
                   onChange={(e) => setProjDesc(e.target.value)}
-                  className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100 placeholder-zinc-500 text-xs focus:outline-none focus:border-blue-500"
+                  className="clay-input w-full px-3.5 py-2.5 text-white placeholder-zinc-500 text-xs focus:outline-none min-h-[38px]"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-zinc-400 font-medium mb-1">Parent Goal</label>
+                  <label className="block text-zinc-300 font-semibold mb-1">Parent Goal</label>
                   <select
                     value={projGoalId}
                     onChange={(e) => setProjGoalId(e.target.value)}
-                    className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-200 text-xs focus:outline-none focus:border-blue-500"
+                    className="clay-input w-full px-3.5 py-2.5 text-zinc-200 text-xs focus:outline-none min-h-[38px] cursor-pointer"
                   >
-                    <option value="">None / Standalone</option>
+                    <option value="" className="bg-[#141822] text-zinc-300">None / Standalone</option>
                     {goals.map((g) => (
-                      <option key={g.id} value={g.id}>
+                      <option key={g.id} value={g.id} className="bg-[#141822] text-zinc-200">
                         {g.name}
                       </option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-zinc-400 font-medium mb-1">Target Deadline</label>
+                  <label className="block text-zinc-300 font-semibold mb-1">Target Deadline</label>
                   <input
                     type="date"
                     value={projDeadline}
                     onChange={(e) => setProjDeadline(e.target.value)}
-                    className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100 text-xs focus:outline-none focus:border-blue-500"
+                    className="clay-input w-full px-3.5 py-2.5 text-white text-xs focus:outline-none min-h-[38px]"
                   />
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-zinc-800">
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-white/5">
                 <button
                   type="button"
                   onClick={() => setShowProjectModal(false)}
-                  className="px-3 py-1.5 text-zinc-400 hover:text-zinc-200"
+                  className="clay-btn-secondary px-4 py-2 text-xs"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded font-medium cursor-pointer"
+                  className="clay-btn-primary px-5 py-2 font-bold text-xs"
                 >
                   Create Project
                 </button>

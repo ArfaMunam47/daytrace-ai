@@ -42,10 +42,15 @@ export function authenticateToken(req: AuthenticatedRequest, res: Response, next
 }
 
 // ----------------------------------------------------
-// Health Check
+// Health Check & Diagnostic Status
 // ----------------------------------------------------
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', time: new Date().toISOString() });
+  res.json({
+    status: 'ok',
+    databaseEngine: db.getEngine(),
+    isPersistent: db.isPersistent(),
+    time: new Date().toISOString(),
+  });
 });
 
 // ----------------------------------------------------
@@ -54,14 +59,15 @@ app.get('/api/health', (req, res) => {
 
 // 1. Sign Up
 app.post('/api/auth/signup', async (req, res) => {
+  const normalizedEmail = typeof req.body?.email === 'string' ? req.body.email.toLowerCase().trim() : '';
   try {
-    const { firstName, lastName, email, password, confirmPassword } = req.body;
+    const { firstName, lastName, password, confirmPassword } = req.body;
 
-    if (!firstName || !lastName || !email || !password) {
+    if (!firstName || !lastName || !normalizedEmail || !password) {
       return res.status(400).json({ error: 'All fields (first name, last name, email, password) are required.' });
     }
 
-    if (password.length < 6) {
+    if (typeof password !== 'string' || password.length < 6) {
       return res.status(400).json({ error: 'Password must be at least 6 characters long.' });
     }
 
@@ -70,25 +76,28 @@ app.post('/api/auth/signup', async (req, res) => {
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (!emailRegex.test(normalizedEmail)) {
       return res.status(400).json({ error: 'Please enter a valid email address.' });
     }
 
-    const existingUser = db.findUserByEmail(email);
+    const existingUser = await db.findUserByEmail(normalizedEmail);
     if (existingUser) {
-      return res.status(409).json({ error: 'An account with this email address already exists. Please log in.' });
+      console.warn(`[Auth] Signup rejected for existing email: ${normalizedEmail}`);
+      return res.status(409).json({ error: 'An account with this email already exists.' });
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const user = db.createUser({
-      email,
+    const user = await db.createUser({
+      email: normalizedEmail,
       passwordHash,
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
+      firstName: String(firstName).trim(),
+      lastName: String(lastName).trim(),
     });
 
     const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: '30d' });
-    const profile = db.getUserProfile(user.id);
+    const profile = await db.getUserProfile(user.id);
+
+    console.log(`[Auth] User created successfully: ${user.id} (${normalizedEmail})`);
 
     return res.status(201).json({
       success: true,
@@ -103,32 +112,50 @@ app.post('/api/auth/signup', async (req, res) => {
       profile,
     });
   } catch (error: any) {
-    console.error('Signup error:', error);
-    return res.status(500).json({ error: 'Unable to complete registration. Please try again.' });
+    console.error(`[Auth] Signup database/server failure for ${normalizedEmail}:`, error?.message || error);
+    return res.status(500).json({ error: 'Something went wrong while completing registration. Please try again.' });
   }
 });
 
 // 2. Login
 app.post('/api/auth/login', async (req, res) => {
+  const normalizedEmail = typeof req.body?.email === 'string' ? req.body.email.toLowerCase().trim() : '';
   try {
-    const { email, password } = req.body;
+    const { password } = req.body;
 
-    if (!email || !password) {
+    if (!normalizedEmail || !password) {
       return res.status(400).json({ error: 'Email and password are required.' });
     }
 
-    const user = db.findUserByEmail(email);
+    let user;
+    try {
+      user = await db.findUserByEmail(normalizedEmail);
+    } catch (dbErr: any) {
+      console.error(`[Auth] Database lookup error during login for ${normalizedEmail}:`, dbErr?.message || dbErr);
+      return res.status(500).json({ error: 'Something went wrong while signing you in. Please try again.' });
+    }
+
     if (!user) {
-      return res.status(401).json({ error: 'Invalid email or password.' });
+      console.warn(`[Auth] Login attempt for unregistered email: ${normalizedEmail}`);
+      return res.status(401).json({
+        error: 'No account found with this email. Please switch to Create Account to sign up.',
+        code: 'USER_NOT_FOUND',
+      });
     }
 
     const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) {
-      return res.status(401).json({ error: 'Invalid email or password.' });
+      console.warn(`[Auth] Login failed: Password mismatch for user: ${user.id} (${normalizedEmail})`);
+      return res.status(401).json({
+        error: 'Incorrect password. Please verify your password or use "Forgot password?" to reset it.',
+        code: 'INVALID_PASSWORD',
+      });
     }
 
     const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: '30d' });
-    const profile = db.getUserProfile(user.id);
+    const profile = await db.getUserProfile(user.id);
+
+    console.log(`[Auth] User login successful: ${user.id} (${normalizedEmail})`);
 
     return res.json({
       success: true,
@@ -143,33 +170,39 @@ app.post('/api/auth/login', async (req, res) => {
       profile,
     });
   } catch (error: any) {
-    console.error('Login error:', error);
-    return res.status(500).json({ error: 'Unable to log in. Please try again.' });
+    console.error(`[Auth] Unexpected server error during login for ${normalizedEmail}:`, error?.message || error);
+    return res.status(500).json({ error: 'Something went wrong while signing you in. Please try again.' });
   }
 });
 
 // 3. Get Current User & Profile (/api/auth/me)
-app.get('/api/auth/me', authenticateToken, (req: AuthenticatedRequest, res) => {
-  const user = db.findUserById(req.userId!);
-  if (!user) {
-    return res.status(404).json({ error: 'User account not found.' });
-  }
+app.get('/api/auth/me', authenticateToken, async (req: AuthenticatedRequest, res) => {
+  try {
+    const user = await db.findUserById(req.userId!);
+    if (!user) {
+      console.warn(`[Auth] /api/auth/me: User ${req.userId} not found in database.`);
+      return res.status(404).json({ error: 'User account not found.' });
+    }
 
-  const profile = db.getUserProfile(user.id);
-  return res.json({
-    user: {
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      createdAt: user.createdAt,
-    },
-    profile,
-  });
+    const profile = await db.getUserProfile(user.id);
+    return res.json({
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        createdAt: user.createdAt,
+      },
+      profile,
+    });
+  } catch (error: any) {
+    console.error(`[Auth] Error in /api/auth/me for user ${req.userId}:`, error?.message || error);
+    return res.status(500).json({ error: 'Failed to retrieve user profile.' });
+  }
 });
 
 // 4. Update Profile
-app.patch('/api/auth/profile', authenticateToken, (req: AuthenticatedRequest, res) => {
+app.patch('/api/auth/profile', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
     const {
       firstName,
@@ -185,16 +218,17 @@ app.patch('/api/auth/profile', authenticateToken, (req: AuthenticatedRequest, re
       soundEffects,
       notificationsEnabled,
       onboarded,
+      welcomeDismissed,
     } = req.body;
 
     if (firstName || lastName) {
-      db.updateUser(req.userId!, {
-        ...(firstName ? { firstName: firstName.trim() } : {}),
-        ...(lastName ? { lastName: lastName.trim() } : {}),
+      await db.updateUser(req.userId!, {
+        ...(firstName ? { firstName: String(firstName).trim() } : {}),
+        ...(lastName ? { lastName: String(lastName).trim() } : {}),
       });
     }
 
-    const updatedProfile = db.updateUserProfile(req.userId!, {
+    const updatedProfile = await db.updateUserProfile(req.userId!, {
       ...(role !== undefined ? { role } : {}),
       ...(customRole !== undefined ? { customRole } : {}),
       ...(custom_role !== undefined ? { custom_role } : {}),
@@ -206,9 +240,10 @@ app.patch('/api/auth/profile', authenticateToken, (req: AuthenticatedRequest, re
       ...(soundEffects !== undefined ? { soundEffects: Boolean(soundEffects) } : {}),
       ...(notificationsEnabled !== undefined ? { notificationsEnabled: Boolean(notificationsEnabled) } : {}),
       ...(onboarded !== undefined ? { onboarded: Boolean(onboarded) } : {}),
+      ...(welcomeDismissed !== undefined ? { welcomeDismissed: Boolean(welcomeDismissed) } : {}),
     });
 
-    const user = db.findUserById(req.userId!);
+    const user = await db.findUserById(req.userId!);
 
     return res.json({
       success: true,
@@ -230,12 +265,12 @@ app.patch('/api/auth/profile', authenticateToken, (req: AuthenticatedRequest, re
 // 5. Forgot Password & Reset
 app.post('/api/auth/forgot-password', async (req, res) => {
   try {
-    const { email } = req.body;
+    const email = typeof req.body?.email === 'string' ? req.body.email.toLowerCase().trim() : '';
     if (!email) {
       return res.status(400).json({ error: 'Email is required.' });
     }
 
-    const user = db.findUserByEmail(email);
+    const user = await db.findUserByEmail(email);
     if (!user) {
       return res.json({
         success: true,
@@ -245,7 +280,7 @@ app.post('/api/auth/forgot-password', async (req, res) => {
     }
 
     const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
-    db.updateUser(user.id, {
+    await db.updateUser(user.id, {
       resetToken: resetCode,
       resetTokenExpiry: Date.now() + 1000 * 60 * 60,
     });
@@ -256,28 +291,30 @@ app.post('/api/auth/forgot-password', async (req, res) => {
       resetCode,
     });
   } catch (error: any) {
+    console.error('Forgot password error:', error);
     return res.status(500).json({ error: 'Failed to process forgot password request.' });
   }
 });
 
 app.post('/api/auth/reset-password', async (req, res) => {
   try {
-    const { email, resetCode, newPassword } = req.body;
+    const email = typeof req.body?.email === 'string' ? req.body.email.toLowerCase().trim() : '';
+    const { resetCode, newPassword } = req.body;
     if (!email || !resetCode || !newPassword) {
       return res.status(400).json({ error: 'Email, reset code, and new password are required.' });
     }
 
-    if (newPassword.length < 6) {
+    if (typeof newPassword !== 'string' || newPassword.length < 6) {
       return res.status(400).json({ error: 'Password must be at least 6 characters long.' });
     }
 
-    const user = db.findUserByEmail(email);
+    const user = await db.findUserByEmail(email);
     if (!user || user.resetToken !== resetCode || (user.resetTokenExpiry && user.resetTokenExpiry < Date.now())) {
       return res.status(400).json({ error: 'Invalid or expired reset code.' });
     }
 
     const passwordHash = await bcrypt.hash(newPassword, 10);
-    db.updateUser(user.id, {
+    await db.updateUser(user.id, {
       passwordHash,
       resetToken: undefined,
       resetTokenExpiry: undefined,
@@ -285,6 +322,7 @@ app.post('/api/auth/reset-password', async (req, res) => {
 
     return res.json({ success: true, message: 'Password has been successfully updated. You can now log in.' });
   } catch (error: any) {
+    console.error('Reset password error:', error);
     return res.status(500).json({ error: 'Failed to reset password.' });
   }
 });
@@ -293,9 +331,9 @@ app.post('/api/auth/reset-password', async (req, res) => {
 // Data Access & Sync API (Isolated strictly to req.userId)
 // ----------------------------------------------------
 
-app.get('/api/data', authenticateToken, (req: AuthenticatedRequest, res) => {
+app.get('/api/data', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
-    const data = db.getUserData(req.userId!);
+    const data = await db.getUserData(req.userId!);
     if (!data) {
       return res.status(404).json({ error: 'User dataset not found.' });
     }
@@ -306,9 +344,9 @@ app.get('/api/data', authenticateToken, (req: AuthenticatedRequest, res) => {
   }
 });
 
-app.post('/api/sync', authenticateToken, (req: AuthenticatedRequest, res) => {
+app.post('/api/sync', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
-    const result = db.syncUserData(req.userId!, req.body);
+    const result = await db.syncUserData(req.userId!, req.body);
     return res.json({ success: true, data: result });
   } catch (error: any) {
     console.error('Sync error:', error);
@@ -317,13 +355,13 @@ app.post('/api/sync', authenticateToken, (req: AuthenticatedRequest, res) => {
 });
 
 // Goals
-app.post('/api/goals', authenticateToken, (req: AuthenticatedRequest, res) => {
+app.post('/api/goals', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
     const { name, description, category, targetHours, priority, status } = req.body;
     if (!name) return res.status(400).json({ error: 'Goal name is required.' });
 
-    const goal = db.createGoal(req.userId!, {
-      name: name.trim(),
+    const goal = await db.createGoal(req.userId!, {
+      name: String(name).trim(),
       description: description || '',
       category: category || 'CORE_SKILL',
       targetHours: Number(targetHours) || 100,
@@ -337,9 +375,9 @@ app.post('/api/goals', authenticateToken, (req: AuthenticatedRequest, res) => {
   }
 });
 
-app.patch('/api/goals/:id', authenticateToken, (req: AuthenticatedRequest, res) => {
+app.patch('/api/goals/:id', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
-    const goal = db.updateGoal(req.userId!, req.params.id, req.body);
+    const goal = await db.updateGoal(req.userId!, req.params.id, req.body);
     if (!goal) return res.status(404).json({ error: 'Goal not found.' });
     return res.json(goal);
   } catch (error: any) {
@@ -347,9 +385,9 @@ app.patch('/api/goals/:id', authenticateToken, (req: AuthenticatedRequest, res) 
   }
 });
 
-app.delete('/api/goals/:id', authenticateToken, (req: AuthenticatedRequest, res) => {
+app.delete('/api/goals/:id', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
-    const ok = db.deleteGoal(req.userId!, req.params.id);
+    const ok = await db.deleteGoal(req.userId!, req.params.id);
     if (!ok) return res.status(404).json({ error: 'Goal not found.' });
     return res.json({ success: true });
   } catch (error: any) {
@@ -358,13 +396,13 @@ app.delete('/api/goals/:id', authenticateToken, (req: AuthenticatedRequest, res)
 });
 
 // Projects
-app.post('/api/projects', authenticateToken, (req: AuthenticatedRequest, res) => {
+app.post('/api/projects', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
     const { name, description, goalId, deadline, status } = req.body;
     if (!name) return res.status(400).json({ error: 'Project name is required.' });
 
-    const project = db.createProject(req.userId!, {
-      name: name.trim(),
+    const project = await db.createProject(req.userId!, {
+      name: String(name).trim(),
       description: description || '',
       goalId,
       deadline,
@@ -377,9 +415,9 @@ app.post('/api/projects', authenticateToken, (req: AuthenticatedRequest, res) =>
   }
 });
 
-app.patch('/api/projects/:id', authenticateToken, (req: AuthenticatedRequest, res) => {
+app.patch('/api/projects/:id', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
-    const project = db.updateProject(req.userId!, req.params.id, req.body);
+    const project = await db.updateProject(req.userId!, req.params.id, req.body);
     if (!project) return res.status(404).json({ error: 'Project not found.' });
     return res.json(project);
   } catch (error: any) {
@@ -387,9 +425,9 @@ app.patch('/api/projects/:id', authenticateToken, (req: AuthenticatedRequest, re
   }
 });
 
-app.delete('/api/projects/:id', authenticateToken, (req: AuthenticatedRequest, res) => {
+app.delete('/api/projects/:id', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
-    const ok = db.deleteProject(req.userId!, req.params.id);
+    const ok = await db.deleteProject(req.userId!, req.params.id);
     if (!ok) return res.status(404).json({ error: 'Project not found.' });
     return res.json({ success: true });
   } catch (error: any) {
@@ -398,13 +436,13 @@ app.delete('/api/projects/:id', authenticateToken, (req: AuthenticatedRequest, r
 });
 
 // Tasks
-app.post('/api/tasks', authenticateToken, (req: AuthenticatedRequest, res) => {
+app.post('/api/tasks', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
     const { name, date, priority, estimatedMinutes, projectId, goalId } = req.body;
     if (!name || !date) return res.status(400).json({ error: 'Task name and date are required.' });
 
-    const task = db.createTask(req.userId!, {
-      name: name.trim(),
+    const task = await db.createTask(req.userId!, {
+      name: String(name).trim(),
       date,
       priority: priority || 'should',
       estimatedMinutes: Number(estimatedMinutes) || 30,
@@ -419,9 +457,9 @@ app.post('/api/tasks', authenticateToken, (req: AuthenticatedRequest, res) => {
   }
 });
 
-app.patch('/api/tasks/:id', authenticateToken, (req: AuthenticatedRequest, res) => {
+app.patch('/api/tasks/:id', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
-    const task = db.updateTask(req.userId!, req.params.id, req.body);
+    const task = await db.updateTask(req.userId!, req.params.id, req.body);
     if (!task) return res.status(404).json({ error: 'Task not found.' });
     return res.json(task);
   } catch (error: any) {
@@ -429,9 +467,9 @@ app.patch('/api/tasks/:id', authenticateToken, (req: AuthenticatedRequest, res) 
   }
 });
 
-app.delete('/api/tasks/:id', authenticateToken, (req: AuthenticatedRequest, res) => {
+app.delete('/api/tasks/:id', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
-    const ok = db.deleteTask(req.userId!, req.params.id);
+    const ok = await db.deleteTask(req.userId!, req.params.id);
     if (!ok) return res.status(404).json({ error: 'Task not found.' });
     return res.json({ success: true });
   } catch (error: any) {
@@ -440,13 +478,13 @@ app.delete('/api/tasks/:id', authenticateToken, (req: AuthenticatedRequest, res)
 });
 
 // Focus Sessions
-app.post('/api/focus-sessions', authenticateToken, (req: AuthenticatedRequest, res) => {
+app.post('/api/focus-sessions', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
     const { activityName, category, startedAt, plannedDurationMinutes, taskId, isInterruption, interruptionType, notes } = req.body;
     if (!activityName) return res.status(400).json({ error: 'Activity name is required.' });
 
-    const session = db.createFocusSession(req.userId!, {
-      activityName,
+    const session = await db.createFocusSession(req.userId!, {
+      activityName: String(activityName),
       category: category || 'DEEP_WORK',
       startedAt: startedAt || Date.now(),
       plannedDurationMinutes: Number(plannedDurationMinutes) || 25,
@@ -463,9 +501,9 @@ app.post('/api/focus-sessions', authenticateToken, (req: AuthenticatedRequest, r
   }
 });
 
-app.patch('/api/focus-sessions/:id', authenticateToken, (req: AuthenticatedRequest, res) => {
+app.patch('/api/focus-sessions/:id', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
-    const session = db.updateFocusSession(req.userId!, req.params.id, req.body);
+    const session = await db.updateFocusSession(req.userId!, req.params.id, req.body);
     if (!session) return res.status(404).json({ error: 'Focus session not found.' });
     return res.json(session);
   } catch (error: any) {
@@ -474,15 +512,15 @@ app.patch('/api/focus-sessions/:id', authenticateToken, (req: AuthenticatedReque
 });
 
 // Activity Logs
-app.post('/api/activity-logs', authenticateToken, (req: AuthenticatedRequest, res) => {
+app.post('/api/activity-logs', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
     const { activityName, category, durationMinutes, date, goalId, projectId, taskId, isInterruption, interruptionType, notes, timestamp } = req.body;
     if (!activityName || !durationMinutes) {
       return res.status(400).json({ error: 'Activity name and duration are required.' });
     }
 
-    const log = db.createActivityLog(req.userId!, {
-      activityName: activityName.trim(),
+    const log = await db.createActivityLog(req.userId!, {
+      activityName: String(activityName).trim(),
       category: category || 'DEEP_WORK',
       durationMinutes: Number(durationMinutes),
       date: date || new Date().toISOString().split('T')[0],
@@ -500,9 +538,9 @@ app.post('/api/activity-logs', authenticateToken, (req: AuthenticatedRequest, re
   }
 });
 
-app.delete('/api/activity-logs/:id', authenticateToken, (req: AuthenticatedRequest, res) => {
+app.delete('/api/activity-logs/:id', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
-    const ok = db.deleteActivityLog(req.userId!, req.params.id);
+    const ok = await db.deleteActivityLog(req.userId!, req.params.id);
     if (!ok) return res.status(404).json({ error: 'Log not found.' });
     return res.json({ success: true });
   } catch (error: any) {
@@ -511,13 +549,13 @@ app.delete('/api/activity-logs/:id', authenticateToken, (req: AuthenticatedReque
 });
 
 // Habits
-app.post('/api/habits', authenticateToken, (req: AuthenticatedRequest, res) => {
+app.post('/api/habits', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
     const { name, description, frequencyPerWeek } = req.body;
     if (!name) return res.status(400).json({ error: 'Habit name is required.' });
 
-    const habit = db.createHabit(req.userId!, {
-      name: name.trim(),
+    const habit = await db.createHabit(req.userId!, {
+      name: String(name).trim(),
       description: description || '',
       frequencyPerWeek: Number(frequencyPerWeek) || 7,
       streakCount: 0,
@@ -530,9 +568,9 @@ app.post('/api/habits', authenticateToken, (req: AuthenticatedRequest, res) => {
   }
 });
 
-app.patch('/api/habits/:id', authenticateToken, (req: AuthenticatedRequest, res) => {
+app.patch('/api/habits/:id', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
-    const habit = db.updateHabit(req.userId!, req.params.id, req.body);
+    const habit = await db.updateHabit(req.userId!, req.params.id, req.body);
     if (!habit) return res.status(404).json({ error: 'Habit not found.' });
     return res.json(habit);
   } catch (error: any) {
@@ -540,9 +578,9 @@ app.patch('/api/habits/:id', authenticateToken, (req: AuthenticatedRequest, res)
   }
 });
 
-app.delete('/api/habits/:id', authenticateToken, (req: AuthenticatedRequest, res) => {
+app.delete('/api/habits/:id', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
-    const ok = db.deleteHabit(req.userId!, req.params.id);
+    const ok = await db.deleteHabit(req.userId!, req.params.id);
     if (!ok) return res.status(404).json({ error: 'Habit not found.' });
     return res.json({ success: true });
   } catch (error: any) {
@@ -550,12 +588,12 @@ app.delete('/api/habits/:id', authenticateToken, (req: AuthenticatedRequest, res
   }
 });
 
-app.post('/api/habits/:id/toggle-date', authenticateToken, (req: AuthenticatedRequest, res) => {
+app.post('/api/habits/:id/toggle-date', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
     const { date } = req.body;
     if (!date) return res.status(400).json({ error: 'Date is required.' });
 
-    const habit = db.toggleHabitDate(req.userId!, req.params.id, date);
+    const habit = await db.toggleHabitDate(req.userId!, req.params.id, String(date));
     if (!habit) return res.status(404).json({ error: 'Habit not found.' });
     return res.json(habit);
   } catch (error: any) {
@@ -564,12 +602,12 @@ app.post('/api/habits/:id/toggle-date', authenticateToken, (req: AuthenticatedRe
 });
 
 // Time Limits
-app.post('/api/time-limits', authenticateToken, (req: AuthenticatedRequest, res) => {
+app.post('/api/time-limits', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
     const { limits } = req.body;
     if (!Array.isArray(limits)) return res.status(400).json({ error: 'Limits array is required.' });
 
-    const updated = db.setTimeLimits(req.userId!, limits);
+    const updated = await db.setTimeLimits(req.userId!, limits);
     return res.json(updated);
   } catch (error: any) {
     return res.status(500).json({ error: 'Failed to save time limits.' });
@@ -577,10 +615,10 @@ app.post('/api/time-limits', authenticateToken, (req: AuthenticatedRequest, res)
 });
 
 // Reviews
-app.post('/api/reviews', authenticateToken, (req: AuthenticatedRequest, res) => {
+app.post('/api/reviews', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
     const { type, periodLabel, startDate, endDate, dataSummary, aiMentorReport, userReflection } = req.body;
-    const review = db.saveReview(req.userId!, {
+    const review = await db.saveReview(req.userId!, {
       type: type || 'weekly',
       periodLabel: periodLabel || 'Weekly Review',
       startDate: startDate || new Date().toISOString(),
@@ -602,8 +640,8 @@ app.post('/api/reviews', authenticateToken, (req: AuthenticatedRequest, res) => 
 
 app.post('/api/ai/mentor-review', authenticateToken, async (req: AuthenticatedRequest, res) => {
   const { reviewType, dataSummary, userProfile } = req.body;
-  const user = db.findUserById(req.userId!);
-  const userProf = db.getUserProfile(req.userId!);
+  const user = await db.findUserById(req.userId!);
+  const userProf = await db.getUserProfile(req.userId!);
   const safeProfile = {
     name: user ? `${user.firstName} ${user.lastName}`.trim() : (userProfile?.name || 'User'),
     occupation: userProf?.occupation || userProf?.role || userProfile?.occupation || 'Professional / Student',
@@ -667,7 +705,7 @@ Provide an honest, constructive 10-point analysis evaluating planned vs actual f
 
 app.post('/api/ai/plan-advisory', authenticateToken, async (req: AuthenticatedRequest, res) => {
   const { plannedTasks, historicalAvgDailyHours, userProfile } = req.body;
-  const user = db.findUserById(req.userId!);
+  const user = await db.findUserById(req.userId!);
   const userName = user ? user.firstName : (userProfile?.name || 'User');
 
   const totalPlannedMinutes = (plannedTasks || []).reduce(
@@ -762,9 +800,9 @@ app.post('/api/ai/chat-stream', authenticateToken, async (req: AuthenticatedRequ
   };
 
   try {
-    const user = db.findUserById(req.userId!);
-    const profile = db.getUserProfile(req.userId!);
-    const userData = db.getUserData(req.userId!);
+    const user = await db.findUserById(req.userId!);
+    const profile = await db.getUserProfile(req.userId!);
+    const userData = await db.getUserData(req.userId!);
 
     const todayStr = new Date().toISOString().split('T')[0];
     const todayTasks = (userData?.tasks || []).filter((t: any) => t.date === todayStr);
@@ -852,9 +890,9 @@ app.post('/api/ai/chat', authenticateToken, async (req: AuthenticatedRequest, re
       return res.status(400).json({ error: 'Message is required.' });
     }
 
-    const user = db.findUserById(req.userId!);
-    const profile = db.getUserProfile(req.userId!);
-    const userData = db.getUserData(req.userId!);
+    const user = await db.findUserById(req.userId!);
+    const profile = await db.getUserProfile(req.userId!);
+    const userData = await db.getUserData(req.userId!);
 
     const todayStr = new Date().toISOString().split('T')[0];
     const todayTasks = (userData?.tasks || []).filter((t: any) => t.date === todayStr);

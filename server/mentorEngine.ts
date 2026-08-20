@@ -186,23 +186,122 @@ export function generateNaturalFallbackReply(
 You don't need to stress over unfinished tasks today. Days like this are what real life is about, and in DayTrace, handling family responsibilities is never a failure. Whenever you are ready, we can gently adjust your plan.`;
   }
 
-  // 2. "I wasted the afternoon / procrastinated / lost focus"
+  // 2. "I wasted the afternoon / procrastinated / lost focus / beat procrastination"
   if (
     lower.includes('wasted') ||
     lower.includes('procrastinat') ||
     lower.includes('lost my afternoon') ||
     lower.includes('did nothing') ||
     lower.includes('scrolling') ||
-    lower.includes('lazy')
+    lower.includes('lazy') ||
+    lower.includes('activation energy') ||
+    lower.includes('start my next priority')
   ) {
-    return `Losing an afternoon happens to everyone, ${name}—it usually means you hit mental fatigue or task ambiguity, not that you failed.
+    return `To beat procrastination, lower the activation energy immediately, ${name}:
 
-Instead of writing off the rest of the day, let's reset:
-1. **Drop the guilt**: What happened earlier is done.
-2. **Pick ONE 15-minute action**: Choose a single low-friction step on your highest priority.
-3. **Close extraneous tabs**: Give yourself a clean slate.
+1. **Commit to 5 Minutes**: Don't aim to finish the entire project—just open the file or workspace and work for 5 minutes. If you want to stop after 5 minutes, you have full permission.
+2. **Remove Visual Friction**: Close extraneous browser tabs and turn your phone face-down away from your immediate eyesight.
+3. **Start a Focus Sprint**: Action always precedes motivation.
 
-What is one small thing you can comfortably accomplish before wrapping up today?`;
+What is one tiny 2-minute step you can take right this second to get moving?`;
+  }
+
+  // 2b. "Be disciplined / stay disciplined / build discipline"
+  if (
+    lower.includes('disciplin') ||
+    lower.includes('self-control') ||
+    lower.includes('willpower') ||
+    lower.includes('stay consistent') ||
+    lower.includes('consistency')
+  ) {
+    return `Discipline isn't about brute willpower, ${name}—it's about building an environment where doing the right thing is the path of least resistance:
+
+1. **Rely on Systems, Not Mood**: Motivation is an emotion that fluctuates daily. A defined trigger (e.g. "At 9:30 AM, open DayTrace and start Timer") removes the need to negotiate with yourself.
+2. **Lower Task Friction**: Prepare your tools and documents the night before so starting requires zero setup effort.
+3. **Never Miss Twice**: If you miss a focus session or get interrupted today, don't spiral. The definition of high discipline is rebounding immediately on the next block.
+
+Which specific habit or task do you want to anchor today?`;
+  }
+
+  // 2c. "Pick #1 Priority / prioritization"
+  if (
+    lower.includes('pick #1 priority') ||
+    lower.includes('pick priority') ||
+    lower.includes('must-do') ||
+    lower.includes('what to prioritize') ||
+    lower.includes('highest priority') ||
+    lower.includes('select my single')
+  ) {
+    const uncompletedTasks = ctx.todayTasks.filter((t) => !t.completed);
+    if (uncompletedTasks.length > 0) {
+      const topTask = uncompletedTasks.find((t) => t.priority === 'HIGH' || t.priority === 'MUST_DO') || uncompletedTasks[0];
+      return `Looking at your plan today, ${name}, your clear #1 Must-Do focus block should be:
+
+🎯 **"${topTask.name}"** (${topTask.estimatedMinutes || 45} min)
+
+When you protect 1 solid block of deep focus for this task, your day is already a concrete win regardless of minor interruptions later. Shall we start a focus timer on it?`;
+    }
+
+    return `To identify your #1 priority, ask this filtering question, ${name}:
+
+*"If I could only accomplish ONE single outcome today before shutting down my laptop, which one would make the entire day a success?"*
+
+Pick that one task, designate it as your Must-Do block, and defer secondary administrative tasks until it is completed. What task comes to mind?`;
+  }
+
+  // 2d. "Deep Study Sprints / Study intervals"
+  if (
+    lower.includes('study sprint') ||
+    lower.includes('study interval') ||
+    lower.includes('25-minute') ||
+    lower.includes('study intervals') ||
+    lower.includes('maximize retention') ||
+    lower.includes('pomodoro')
+  ) {
+    return `Here is how to optimize your study sprints for maximum retention, ${name}:
+
+1. **25-Minute High-Intensity Focus**: Study with zero split attention. No messaging apps, background audio with lyrics, or casual feed checking.
+2. **Active Retrieval at the End**: In the last 2 minutes, close your notes and quickly jot down the 3 core takeaways from memory.
+3. **5-Minute Cognitive Rest**: Step away from all screens during the break. Stretch, drink water, or look out a window to let memory consolidation occur.
+
+Would you like to start a 25-minute Deep Study timer now?`;
+  }
+
+  // 2e. "Household & Life / Chores / Unplanned Responsibilities"
+  if (
+    lower.includes('chore') ||
+    lower.includes('household') ||
+    lower.includes('family interruption') ||
+    lower.includes('without guilt') ||
+    lower.includes('errand') ||
+    lower.includes('unplanned responsibility')
+  ) {
+    return `In DayTrace, handling family responsibilities, household chores, and caretaking is **never classified as wasted time or failure**, ${name}.
+
+Real human life requires care and maintenance. When interruptions occur:
+1. **Log them honestly as Unplanned Responsibilities**: Acknowledge the real effort you expended.
+2. **Compress your remaining plan**: Drop low-leverage optional tasks without guilt.
+3. **Protect 1 core focus block**: Even 30 minutes of deep focus is enough to preserve your daily momentum.
+
+You handled what was necessary—now let's adjust the rest of your evening smoothly.`;
+  }
+
+  // 2f. "Distraction boundaries / Social media"
+  if (
+    lower.includes('distraction boundar') ||
+    lower.includes('social media') ||
+    lower.includes('limit feeds') ||
+    lower.includes('scrolling feed') ||
+    lower.includes('screen time') ||
+    lower.includes('phone limits')
+  ) {
+    return `Here is a pragmatic strategy to enforce distraction boundaries without relying on impossible willpower, ${name}:
+
+1. **Create Physical Distance**: Place your phone in another room or inside a drawer during deep work blocks.
+2. **Designate Intentional Windows**: Rather than trying to quit cold-turkey, schedule a dedicated 15-minute relaxation window after completing a core focus block.
+3. **Use the 10-Second Pause Rule**: When you feel the reflex to open a feed or browser tab, pause and take 3 deep breaths before opening it. That simple friction breaks the subconscious loop.
+
+What is the primary distraction app you want to set a boundary for today?`;
   }
 
   // 3. "Exam tomorrow / behind / urgent deadline"

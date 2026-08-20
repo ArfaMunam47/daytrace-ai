@@ -70,28 +70,33 @@ export const QuickLogModal: React.FC<QuickLogModalProps> = ({ isOpen, onClose })
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="clay-modal w-full max-w-lg overflow-hidden animate-in fade-in duration-200">
         {/* Header */}
-        <div className="px-5 py-4 border-b border-zinc-800 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4 text-emerald-400" />
-            <h3 className="font-semibold text-zinc-100 text-sm">Quick Activity Log</h3>
+        <div className="px-6 py-4.5 border-b border-white/5 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 border border-white/30 flex items-center justify-center text-white shadow-[0_2px_8px_rgba(16,185,129,0.4),inset_0_1px_1px_rgba(255,255,255,0.4)]">
+              <Clock className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="font-bold text-white text-base">Quick Activity Log</h3>
+              <p className="text-[11px] text-zinc-400">Record past activity seamlessly</p>
+            </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition"
+            className="p-1.5 rounded-xl text-zinc-400 hover:text-white hover:bg-white/5 transition cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Content Form */}
-        <form onSubmit={handleSubmit} className="p-5 space-y-4 text-xs">
+        <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs">
           {/* Quick Preset Buttons */}
           <div>
-            <label className="block text-zinc-400 font-medium mb-2">What happened? (Select or type)</label>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 max-h-40 overflow-y-auto pr-1">
+            <label className="block text-zinc-300 font-semibold mb-2">What happened? (Select or type)</label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-44 overflow-y-auto pr-1">
               {COMMON_ACTIVITIES.map((act) => {
                 const isSelected = activityName === act.name;
                 return (
@@ -99,14 +104,14 @@ export const QuickLogModal: React.FC<QuickLogModalProps> = ({ isOpen, onClose })
                     type="button"
                     key={act.name}
                     onClick={() => handleSelectPresetActivity(act)}
-                    className={`flex items-center gap-1.5 p-2 rounded-lg text-left transition border ${
+                    className={`flex items-center gap-2 p-2.5 rounded-2xl text-left transition cursor-pointer ${
                       isSelected
-                        ? 'bg-emerald-950/60 border-emerald-500/60 text-emerald-300 font-medium'
-                        : 'bg-zinc-800/60 border-zinc-700/40 text-zinc-300 hover:bg-zinc-800'
+                        ? 'clay-nav-active font-bold text-emerald-300'
+                        : 'clay-card-interactive text-zinc-300 hover:text-white'
                     }`}
                   >
-                    <span>{act.icon}</span>
-                    <span className="truncate">{act.name}</span>
+                    <span className="text-base">{act.icon}</span>
+                    <span className="truncate text-xs font-medium">{act.name}</span>
                   </button>
                 );
               })}
@@ -121,14 +126,14 @@ export const QuickLogModal: React.FC<QuickLogModalProps> = ({ isOpen, onClose })
               placeholder="e.g. Building Next.js authentication flow..."
               value={activityName}
               onChange={(e) => setActivityName(e.target.value)}
-              className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-emerald-500 text-xs"
+              className="clay-input w-full px-3.5 py-2.5 text-white placeholder-zinc-500 focus:outline-none text-xs font-medium"
             />
           </div>
 
           {/* Category Selector */}
           <div>
-            <label className="block text-zinc-400 font-medium mb-1.5">Category</label>
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-1">
+            <label className="block text-zinc-300 font-semibold mb-1.5">Category</label>
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
               {(
                 [
                   'PRODUCTIVE',
@@ -143,16 +148,16 @@ export const QuickLogModal: React.FC<QuickLogModalProps> = ({ isOpen, onClose })
                   type="button"
                   key={cat}
                   onClick={() => setCategory(cat)}
-                  className={`py-1.5 px-2 rounded-md text-[11px] font-medium transition border text-center ${
+                  className={`py-1.5 px-2 rounded-xl text-[11px] font-bold transition text-center cursor-pointer ${
                     category === cat
                       ? cat === 'PRODUCTIVE'
-                        ? 'bg-emerald-900/60 border-emerald-500 text-emerald-300'
+                        ? 'clay-pill-emerald'
                         : cat === 'DISTRACTION'
-                        ? 'bg-rose-900/60 border-rose-500 text-rose-300'
+                        ? 'clay-pill-rose'
                         : cat === 'RESPONSIBILITY'
-                        ? 'bg-purple-900/60 border-purple-500 text-purple-300'
-                        : 'bg-blue-900/60 border-blue-500 text-blue-300'
-                      : 'bg-zinc-800 border-zinc-700/50 text-zinc-400 hover:text-zinc-200'
+                        ? 'clay-pill-purple'
+                        : 'clay-pill-amber'
+                      : 'clay-card-sm text-zinc-400 hover:text-white'
                   }`}
                 >
                   {cat.slice(0, 5)}
@@ -163,8 +168,8 @@ export const QuickLogModal: React.FC<QuickLogModalProps> = ({ isOpen, onClose })
 
           {/* Duration Chips */}
           <div>
-            <label className="block text-zinc-400 font-medium mb-1.5">Duration</label>
-            <div className="flex flex-wrap items-center gap-1.5">
+            <label className="block text-zinc-300 font-semibold mb-1.5">Duration</label>
+            <div className="flex flex-wrap items-center gap-2">
               {PRESET_DURATIONS.map((dur) => (
                 <button
                   type="button"
@@ -173,10 +178,10 @@ export const QuickLogModal: React.FC<QuickLogModalProps> = ({ isOpen, onClose })
                     setDuration(dur);
                     setCustomDuration('');
                   }}
-                  className={`py-1 px-2.5 rounded-lg font-medium transition border ${
+                  className={`py-1.5 px-3 rounded-xl font-bold transition cursor-pointer text-xs ${
                     duration === dur && !customDuration
-                      ? 'bg-emerald-600 border-emerald-500 text-white'
-                      : 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-750'
+                      ? 'clay-btn-primary text-white'
+                      : 'clay-btn-secondary text-zinc-300'
                   }`}
                 >
                   {dur >= 60 ? `${dur / 60}h` : `${dur}m`}
@@ -189,38 +194,38 @@ export const QuickLogModal: React.FC<QuickLogModalProps> = ({ isOpen, onClose })
                 placeholder="Custom (m)"
                 value={customDuration}
                 onChange={(e) => setCustomDuration(e.target.value)}
-                className="w-24 px-2 py-1 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100 text-xs focus:outline-none focus:border-emerald-500"
+                className="clay-input w-28 px-3 py-1.5 text-white text-xs font-semibold focus:outline-none"
               />
             </div>
           </div>
 
           {/* Goal / Project Link (Optional) */}
-          <div className="grid grid-cols-2 gap-2 pt-1">
+          <div className="grid grid-cols-2 gap-3 pt-1">
             <div>
-              <label className="block text-zinc-400 font-medium mb-1">Goal (Optional)</label>
+              <label className="block text-zinc-300 font-semibold mb-1">Goal (Optional)</label>
               <select
                 value={selectedGoalId}
                 onChange={(e) => setSelectedGoalId(e.target.value)}
-                className="w-full px-2.5 py-1.5 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-200 focus:outline-none focus:border-emerald-500 text-xs"
+                className="clay-input w-full px-3 py-2 text-zinc-200 focus:outline-none text-xs cursor-pointer"
               >
-                <option value="">None / Unassigned</option>
+                <option value="" className="bg-[#121620] text-zinc-300">None / Unassigned</option>
                 {goals.map((g) => (
-                  <option key={g.id} value={g.id}>
+                  <option key={g.id} value={g.id} className="bg-[#121620] text-zinc-200">
                     {g.name}
                   </option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-zinc-400 font-medium mb-1">Project (Optional)</label>
+              <label className="block text-zinc-300 font-semibold mb-1">Project (Optional)</label>
               <select
                 value={selectedProjectId}
                 onChange={(e) => setSelectedProjectId(e.target.value)}
-                className="w-full px-2.5 py-1.5 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-200 focus:outline-none focus:border-emerald-500 text-xs"
+                className="clay-input w-full px-3 py-2 text-zinc-200 focus:outline-none text-xs cursor-pointer"
               >
-                <option value="">None / Standalone</option>
+                <option value="" className="bg-[#121620] text-zinc-300">None / Standalone</option>
                 {projects.map((p) => (
-                  <option key={p.id} value={p.id}>
+                  <option key={p.id} value={p.id} className="bg-[#121620] text-zinc-200">
                     {p.name}
                   </option>
                 ))}
@@ -230,38 +235,38 @@ export const QuickLogModal: React.FC<QuickLogModalProps> = ({ isOpen, onClose })
 
           {/* Notes Input */}
           <div>
-            <label className="block text-zinc-400 font-medium mb-1">Accomplishment / Notes (Optional)</label>
+            <label className="block text-zinc-300 font-semibold mb-1">Accomplishment / Notes (Optional)</label>
             <input
               type="text"
               placeholder="What did you get done or notice?"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-emerald-500 text-xs"
+              className="clay-input w-full px-3.5 py-2.5 text-white placeholder-zinc-500 focus:outline-none text-xs"
             />
           </div>
 
           {/* Actions */}
-          <div className="pt-2 flex items-center justify-end gap-2 border-t border-zinc-800">
+          <div className="pt-3 flex items-center justify-end gap-2.5 border-t border-white/5">
             <button
               type="button"
               onClick={onClose}
-              className="px-3 py-2 text-zinc-400 hover:text-zinc-200 rounded-lg transition"
+              className="clay-btn-secondary px-4 py-2 text-xs"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSaved}
-              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-medium transition shadow-sm flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              className="clay-btn-primary px-5 py-2 text-xs font-bold flex items-center gap-2 disabled:opacity-50"
             >
               {isSaved ? (
                 <>
-                  <Check className="w-3.5 h-3.5" />
+                  <Check className="w-4 h-4" />
                   <span>Logged!</span>
                 </>
               ) : (
                 <>
-                  <Sparkles className="w-3.5 h-3.5" />
+                  <Sparkles className="w-4 h-4" />
                   <span>Save Record</span>
                 </>
               )}

@@ -1,0 +1,131 @@
+{
+  "users": [
+    {
+      "id": "aa0042cb-d7a1-4e89-be68-abf02d61e2a9",
+      "email": "test_runner@daytrace.app",
+      "passwordHash": "$2b$10$1HGTU3tFrUn7fSp30Gaepem6MGcpKppbxSLND.schQUGSiPsRUR.G",
+      "firstName": "Test",
+      "lastName": "Runner",
+      "createdAt": "2026-08-20T16:06:35.651Z",
+      "updatedAt": "2026-08-20T16:06:35.651Z"
+    },
+    {
+      "id": "7f9f440e-e80f-4f39-9eed-1395d4308245",
+      "email": "arfamunam01@gmail.com",
+      "passwordHash": "$2b$10$qHdNou.FfPwtq.zJCqmfFuNk1JTBjka1tEng0kdpd9DEsJ9OMHjg2",
+      "firstName": "Ayesha",
+      "lastName": "Mughal",
+      "createdAt": "2026-08-20T16:08:44.947Z",
+      "updatedAt": "2026-08-20T16:10:22.015Z"
+    }
+  ],
+  "profiles": [
+    {
+      "userId": "aa0042cb-d7a1-4e89-be68-abf02d61e2a9",
+      "occupation": "Professional / Builder",
+      "dailyCapacityHours": 4.5,
+      "mainGoalsSummary": [],
+      "timezone": "UTC",
+      "theme": "dark",
+      "soundEffects": true,
+      "notificationsEnabled": true,
+      "onboarded": false,
+      "welcomeDismissed": false,
+      "updatedAt": "2026-08-20T16:06:35.651Z"
+    },
+    {
+      "userId": "7f9f440e-e80f-4f39-9eed-1395d4308245",
+      "occupation": "Entrepreneur / Founder",
+      "dailyCapacityHours": 4.5,
+      "mainGoalsSummary": "to achieve my goal",
+      "timezone": "UTC",
+      "theme": "dark",
+      "soundEffects": true,
+      "notificationsEnabled": true,
+      "onboarded": true,
+      "welcomeDismissed": false,
+      "updatedAt": "2026-08-20T16:09:17.659Z",
+      "role": "entrepreneur"
+    }
+  ],
+  "goals": [
+    {
+      "id": "8542d62a-f9b7-49a2-b374-5a935e0ffdea",
+      "userId": "aa0042cb-d7a1-4e89-be68-abf02d61e2a9",
+      "name": "Deliver Production Persistence",
+      "description": "Zero data loss on serverless cold starts",
+      "category": "DEEP_WORK",
+      "targetHours": 10,
+      "currentHours": 2,
+      "priority": "high",
+      "status": "active",
+      "createdAt": "2026-08-20T16:06:35.831Z",
+      "updatedAt": "2026-08-20T16:06:35.831Z"
+    },
+    {
+      "id": "fd3b9561-d02b-49e5-ab0e-c85ad87c25a8",
+      "userId": "7f9f440e-e80f-4f39-9eed-1395d4308245",
+      "name": "to achieve my goal",
+      "description": "Primary focus ambition established during onboarding setup.",
+      "category": "PRODUCTIVE",
+      "targetHours": 90,
+      "currentHours": 0,
+      "priority": "high",
+      "status": "active",
+      "createdAt": "2026-08-20T16:09:18.146Z",
+      "updatedAt": "2026-08-20T16:09:18.146Z"
+    }
+  ],
+  "projects": [],
+  "tasks": [
+    {
+      "id": "064c3b63-b5af-44b1-9a1c-b2f6317f3ee2",
+      "userId": "aa0042cb-d7a1-4e89-be68-abf02d61e2a9",
+      "goalId": "8542d62a-f9b7-49a2-b374-5a935e0ffdea",
+      "date": "2026-08-20",
+      "name": "Verify database schema initialization",
+      "priority": "must",
+      "estimatedMinutes": 45,
+      "actualMinutes": 45,
+      "completed": true,
+      "rolledOver": false,
+      "createdAt": "2026-08-20T16:06:35.831Z",
+      "updatedAt": "2026-08-20T16:06:35.831Z"
+    }
+  ],
+  "focusSessions": [],
+  "activityLogs": [],
+  "timeLimits": [
+    {
+      "id": "48e2e07b-2b81-40f1-8541-b8ad70dc2865",
+      "userId": "aa0042cb-d7a1-4e89-be68-abf02d61e2a9",
+      "activityName": "YouTube / Video Streaming",
+      "limitMinutes": 30,
+      "period": "daily"
+    },
+    {
+      "id": "99030c72-410e-4c1b-80f4-da0342c475a7",
+      "userId": "aa0042cb-d7a1-4e89-be68-abf02d61e2a9",
+      "activityName": "Social Media / Feeds",
+      "limitMinutes": 20,
+      "period": "daily"
+    },
+    {
+      "id": "31e340cc-0455-4b4c-924a-fc8e03286629",
+      "userId": "7f9f440e-e80f-4f39-9eed-1395d4308245",
+      "activityName": "YouTube / Video Streaming",
+      "limitMinutes": 30,
+      "period": "daily"
+    },
+    {
+      "id": "efd48013-534c-4061-8023-38c299a3ceb4",
+      "userId": "7f9f440e-e80f-4f39-9eed-1395d4308245",
+      "activityName": "Social Media / Feeds",
+      "limitMinutes": 20,
+      "period": "daily"
+    }
+  ],
+  "habits": [],
+  "reviews": [],
+  "growthMilestones": []
+}

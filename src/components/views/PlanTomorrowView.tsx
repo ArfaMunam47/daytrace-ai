@@ -1,11 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
-  Calendar,
   Plus,
   AlertTriangle,
   Sparkles,
   ArrowRight,
-  CheckCircle,
   MoveUp,
   MoveDown,
   Trash2,
@@ -135,17 +133,17 @@ export const PlanTomorrowView: React.FC = () => {
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto space-y-6 animate-in fade-in duration-200">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-zinc-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/5">
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-bold text-zinc-100 tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
               Plan Tomorrow
             </h1>
-            <span className="px-2.5 py-0.5 rounded-full bg-emerald-950/60 border border-emerald-500/40 text-emerald-400 text-xs font-medium">
+            <span className="clay-pill clay-pill-emerald px-2.5 py-0.5 text-xs font-bold">
               {formatReadableDate(tomorrowStr)}
             </span>
           </div>
-          <p className="text-xs text-zinc-400 mt-1">
+          <p className="text-xs text-zinc-400 mt-1 font-medium">
             Build a realistic time budget based on priorities — not a rigid 24-hour schedule.
           </p>
         </div>
@@ -153,35 +151,34 @@ export const PlanTomorrowView: React.FC = () => {
         <button
           onClick={checkPlanFeasibility}
           disabled={isAnalyzing || tomorrowTasks.length === 0}
-          className="self-start sm:self-auto px-3.5 py-2 sm:py-1.5 bg-zinc-800 hover:bg-zinc-750 text-zinc-200 rounded-lg text-xs font-medium border border-zinc-700 transition flex items-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50 min-h-[36px]"
+          className="clay-btn-secondary self-start sm:self-auto px-4 py-2 text-xs font-semibold flex items-center gap-2 cursor-pointer disabled:opacity-50 min-h-[38px]"
         >
-          <BrainCircuit className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+          <BrainCircuit className="w-4 h-4 text-emerald-400 shrink-0" />
           <span>{isAnalyzing ? 'Evaluating...' : 'Check Feasibility'}</span>
         </button>
       </div>
 
       {/* Planned Workload Assessment Banner */}
       <div
-        className={`p-4 rounded-xl border flex items-start justify-between gap-3 ${
+        className={`p-4.5 rounded-2xl border flex items-start justify-between gap-3 shadow-[0_8px_20px_rgba(0,0,0,0.3),inset_0_1px_1px_rgba(255,255,255,0.08)] ${
           totalPlannedMinutes > 360
-            ? 'bg-amber-950/30 border-amber-500/40 text-amber-200'
-            : 'bg-zinc-900 border-zinc-800 text-zinc-200'
+            ? 'bg-gradient-to-r from-amber-950/40 to-[#1f1a14] border-amber-500/40 text-amber-200'
+            : 'clay-card text-zinc-200'
         }`}
       >
-        <div className="space-y-1 w-full">
+        <div className="space-y-1.5 w-full">
           <div className="flex items-center gap-2">
             {totalPlannedMinutes > 360 ? (
               <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
             ) : (
               <Info className="w-4 h-4 text-emerald-400 shrink-0" />
             )}
-            <span className="text-sm font-semibold text-zinc-100">
-              Planned: ~{totalPlannedHours}h of focused work (
-              {formatMinutes(totalPlannedMinutes)}).
+            <span className="text-sm font-bold text-white">
+              Planned: ~{totalPlannedHours}h of focused work ({formatMinutes(totalPlannedMinutes)}).
             </span>
           </div>
 
-          <p className="text-xs text-zinc-400 leading-relaxed">
+          <p className="text-xs text-zinc-300 leading-relaxed font-medium">
             {totalPlannedMinutes > 480
               ? `You have planned over 8 hours of deep work. Based on realistic cognitive stamina and daily household chores, this may be difficult to sustain. Consider demoting 1-2 items to Optional.`
               : totalPlannedMinutes > 360
@@ -190,8 +187,8 @@ export const PlanTomorrowView: React.FC = () => {
           </p>
 
           {aiAdvice && (
-            <div className="mt-2 pt-2 border-t border-zinc-800/80 text-xs text-emerald-300 italic flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 shrink-0" />
+            <div className="mt-2 pt-2 border-t border-white/5 text-xs text-emerald-300 italic flex items-center gap-2 font-medium">
+              <Sparkles className="w-4 h-4 shrink-0 text-emerald-400" />
               <span>AI Advisor: {aiAdvice}</span>
             </div>
           )}
@@ -200,28 +197,28 @@ export const PlanTomorrowView: React.FC = () => {
 
       {/* Carried Forward Suggestions from Today */}
       {todayUnfinishedTasks.length > 0 && (
-        <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-xl space-y-3">
+        <div className="p-4.5 clay-card space-y-3.5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-            <span className="text-xs font-bold text-zinc-200 uppercase tracking-wider">
+            <span className="text-xs font-bold text-white uppercase tracking-wider">
               Unfinished Tasks from Today
             </span>
-            <span className="text-[11px] text-zinc-400">
+            <span className="text-[11px] text-zinc-400 font-medium">
               Carry forward intentionally without overloading tomorrow.
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {todayUnfinishedTasks.map((t) => (
               <div
                 key={t.id}
-                className="p-3 bg-zinc-800/60 border border-zinc-700/60 rounded-lg flex items-center justify-between gap-2.5"
+                className="p-3 clay-card-sm flex items-center justify-between gap-3"
               >
                 <div className="truncate min-w-0 flex-1">
-                  <div className="text-xs font-medium text-zinc-200 truncate">{t.name}</div>
-                  <div className="text-[10px] text-zinc-400 flex flex-wrap items-center gap-1.5 mt-0.5">
+                  <div className="text-xs font-semibold text-white truncate">{t.name}</div>
+                  <div className="text-[10px] text-zinc-400 flex flex-wrap items-center gap-1.5 mt-0.5 font-medium">
                     <span>⏱️ {formatMinutes(t.estimatedMinutes)}</span>
                     {t.postponedCount > 1 && (
-                      <span className="text-amber-400 bg-amber-400/10 px-1 py-0.5 rounded text-[10px]">
+                      <span className="text-amber-300 bg-amber-400/10 px-1.5 py-0.5 rounded-full text-[10px] font-bold">
                         Postponed {t.postponedCount}x
                       </span>
                     )}
@@ -230,7 +227,7 @@ export const PlanTomorrowView: React.FC = () => {
 
                 <button
                   onClick={() => handleCarryForward(t)}
-                  className="px-2.5 py-1.5 bg-emerald-600/80 hover:bg-emerald-500 text-white rounded-lg text-xs font-medium transition flex items-center gap-1 shrink-0 cursor-pointer min-h-[32px]"
+                  className="clay-btn-primary px-3 py-1.5 text-xs font-bold flex items-center gap-1.5 shrink-0 min-h-[32px]"
                 >
                   <span className="hidden sm:inline">Move</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -244,67 +241,67 @@ export const PlanTomorrowView: React.FC = () => {
       {/* Add New Task Form */}
       <form
         onSubmit={handleAddTask}
-        className="p-4 sm:p-5 bg-zinc-900 border border-zinc-800 rounded-xl space-y-3.5 text-xs shadow-xs"
+        className="p-5 sm:p-6 clay-card space-y-4 text-xs"
       >
-        <h3 className="font-bold text-zinc-200 uppercase tracking-wider text-xs flex items-center gap-1.5">
-          <Plus className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+        <h3 className="font-bold text-white uppercase tracking-wider text-xs flex items-center gap-2">
+          <Plus className="w-4 h-4 text-emerald-400 shrink-0" />
           Add Tomorrow&apos;s Priority
         </h3>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <div className="sm:col-span-2">
-            <label className="block text-zinc-400 font-medium mb-1">Task / Activity Name</label>
+            <label className="block text-zinc-300 font-semibold mb-1.5">Task / Activity Name</label>
             <input
               type="text"
               required
               placeholder="e.g. Implement authentication tests..."
               value={taskName}
               onChange={(e) => setTaskName(e.target.value)}
-              className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-emerald-500 min-h-[36px]"
+              className="clay-input w-full px-3.5 py-2.5 text-white placeholder-zinc-500 focus:outline-none min-h-[38px]"
             />
           </div>
 
           <div>
-            <label className="block text-zinc-400 font-medium mb-1">Priority Tier</label>
+            <label className="block text-zinc-300 font-semibold mb-1.5">Priority Tier</label>
             <select
               value={priorityTier}
               onChange={(e) => setPriorityTier(e.target.value as PriorityTier)}
-              className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-200 focus:outline-none focus:border-emerald-500 min-h-[36px]"
+              className="clay-input w-full px-3 py-2.5 text-zinc-200 focus:outline-none min-h-[38px] cursor-pointer"
             >
-              <option value="MUST_DO">Must Do (Essential)</option>
-              <option value="SHOULD_DO">Should Do (If time permits)</option>
-              <option value="OPTIONAL">Optional (Bonus)</option>
+              <option value="MUST_DO" className="bg-[#141822] text-zinc-200">Must Do (Essential)</option>
+              <option value="SHOULD_DO" className="bg-[#141822] text-zinc-200">Should Do (If time permits)</option>
+              <option value="OPTIONAL" className="bg-[#141822] text-zinc-200">Optional (Bonus)</option>
             </select>
           </div>
 
           <div>
-            <label className="block text-zinc-400 font-medium mb-1">Estimated Duration</label>
+            <label className="block text-zinc-300 font-semibold mb-1.5">Estimated Duration</label>
             <select
               value={estimatedMinutes}
               onChange={(e) => setEstimatedMinutes(Number(e.target.value))}
-              className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-200 focus:outline-none focus:border-emerald-500 min-h-[36px]"
+              className="clay-input w-full px-3 py-2.5 text-zinc-200 focus:outline-none min-h-[38px] cursor-pointer"
             >
-              <option value={15}>15 minutes</option>
-              <option value={30}>30 minutes</option>
-              <option value={45}>45 minutes</option>
-              <option value={60}>60 minutes (1 hour)</option>
-              <option value={90}>90 minutes (1.5 hours)</option>
-              <option value={120}>120 minutes (2 hours)</option>
+              <option value={15} className="bg-[#141822] text-zinc-200">15 minutes</option>
+              <option value={30} className="bg-[#141822] text-zinc-200">30 minutes</option>
+              <option value={45} className="bg-[#141822] text-zinc-200">45 minutes</option>
+              <option value={60} className="bg-[#141822] text-zinc-200">60 minutes (1 hour)</option>
+              <option value={90} className="bg-[#141822] text-zinc-200">90 minutes (1.5 hours)</option>
+              <option value={120} className="bg-[#141822] text-zinc-200">120 minutes (2 hours)</option>
             </select>
           </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
           <div>
-            <label className="block text-zinc-400 font-medium mb-1">Goal (Optional)</label>
+            <label className="block text-zinc-300 font-semibold mb-1">Goal (Optional)</label>
             <select
               value={selectedGoalId}
               onChange={(e) => setSelectedGoalId(e.target.value)}
-              className="w-full px-2.5 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-200 text-xs focus:outline-none focus:border-emerald-500 min-h-[36px]"
+              className="clay-input w-full px-3 py-2 text-zinc-200 text-xs focus:outline-none min-h-[36px] cursor-pointer"
             >
-              <option value="">None / Standalone</option>
+              <option value="" className="bg-[#141822] text-zinc-300">None / Standalone</option>
               {goals.map((g) => (
-                <option key={g.id} value={g.id}>
+                <option key={g.id} value={g.id} className="bg-[#141822] text-zinc-200">
                   {g.name}
                 </option>
               ))}
@@ -312,15 +309,15 @@ export const PlanTomorrowView: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-zinc-400 font-medium mb-1">Project (Optional)</label>
+            <label className="block text-zinc-300 font-semibold mb-1">Project (Optional)</label>
             <select
               value={selectedProjectId}
               onChange={(e) => setSelectedProjectId(e.target.value)}
-              className="w-full px-2.5 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-200 text-xs focus:outline-none focus:border-emerald-500 min-h-[36px]"
+              className="clay-input w-full px-3 py-2 text-zinc-200 text-xs focus:outline-none min-h-[36px] cursor-pointer"
             >
-              <option value="">None / Standalone</option>
+              <option value="" className="bg-[#141822] text-zinc-300">None / Standalone</option>
               {projects.map((p) => (
-                <option key={p.id} value={p.id}>
+                <option key={p.id} value={p.id} className="bg-[#141822] text-zinc-200">
                   {p.name}
                 </option>
               ))}
@@ -328,13 +325,13 @@ export const PlanTomorrowView: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-zinc-400 font-medium mb-1">Notes (Optional)</label>
+            <label className="block text-zinc-300 font-semibold mb-1">Notes (Optional)</label>
             <input
               type="text"
               placeholder="e.g. Focus on edge cases..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-emerald-500 min-h-[36px]"
+              className="clay-input w-full px-3 py-2 text-white placeholder-zinc-500 focus:outline-none min-h-[36px]"
             />
           </div>
         </div>
@@ -342,7 +339,7 @@ export const PlanTomorrowView: React.FC = () => {
         <div className="flex justify-end pt-2">
           <button
             type="submit"
-            className="w-full sm:w-auto px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-medium transition flex items-center justify-center gap-1.5 cursor-pointer shadow-xs min-h-[38px]"
+            className="clay-btn-primary w-full sm:w-auto px-6 py-2.5 font-bold flex items-center justify-center gap-2 min-h-[38px]"
           >
             <Plus className="w-4 h-4" />
             <span>Add Task to Tomorrow</span>
@@ -352,21 +349,20 @@ export const PlanTomorrowView: React.FC = () => {
 
       {/* Tomorrow's Organized Priority Board */}
       <div className="space-y-4">
-        <h2 className="text-sm font-bold text-zinc-100 uppercase tracking-wider">
+        <h2 className="text-xs font-bold text-white uppercase tracking-wider">
           Tomorrow&apos;s Plan Breakdown
         </h2>
 
         {/* MUST DO SECTION */}
         <div className="space-y-2">
-          <div className="flex items-center justify-between text-xs font-semibold text-rose-300 px-1">
+          <div className="flex items-center justify-between text-xs font-bold text-rose-300 px-1">
             <span>MUST DO — Non-negotiable core focus</span>
             <span className="text-[11px] text-zinc-400 font-normal">
-              {mustDo.length} tasks (
-              {formatMinutes(mustDo.reduce((acc, t) => acc + t.estimatedMinutes, 0))})
+              {mustDo.length} tasks ({formatMinutes(mustDo.reduce((acc, t) => acc + t.estimatedMinutes, 0))})
             </span>
           </div>
           {mustDo.length === 0 ? (
-            <div className="p-3.5 bg-zinc-900/40 border border-dashed border-zinc-800 rounded-xl text-center text-xs text-zinc-500">
+            <div className="p-4 clay-card-sm text-center text-xs text-zinc-500 font-medium border-dashed">
               No Must Do tasks planned for tomorrow yet.
             </div>
           ) : (
@@ -388,15 +384,14 @@ export const PlanTomorrowView: React.FC = () => {
 
         {/* SHOULD DO SECTION */}
         <div className="space-y-2">
-          <div className="flex items-center justify-between text-xs font-semibold text-amber-300 px-1">
+          <div className="flex items-center justify-between text-xs font-bold text-amber-300 px-1">
             <span>SHOULD DO — Valuable if capacity permits</span>
             <span className="text-[11px] text-zinc-400 font-normal">
-              {shouldDo.length} tasks (
-              {formatMinutes(shouldDo.reduce((acc, t) => acc + t.estimatedMinutes, 0))})
+              {shouldDo.length} tasks ({formatMinutes(shouldDo.reduce((acc, t) => acc + t.estimatedMinutes, 0))})
             </span>
           </div>
           {shouldDo.length === 0 ? (
-            <div className="p-3.5 bg-zinc-900/40 border border-dashed border-zinc-800 rounded-xl text-center text-xs text-zinc-500">
+            <div className="p-4 clay-card-sm text-center text-xs text-zinc-500 font-medium border-dashed">
               No Should Do tasks.
             </div>
           ) : (
@@ -418,15 +413,14 @@ export const PlanTomorrowView: React.FC = () => {
 
         {/* OPTIONAL SECTION */}
         <div className="space-y-2">
-          <div className="flex items-center justify-between text-xs font-semibold text-blue-300 px-1">
+          <div className="flex items-center justify-between text-xs font-bold text-blue-300 px-1">
             <span>OPTIONAL — Bonus output</span>
             <span className="text-[11px] text-zinc-400 font-normal">
-              {optional.length} tasks (
-              {formatMinutes(optional.reduce((acc, t) => acc + t.estimatedMinutes, 0))})
+              {optional.length} tasks ({formatMinutes(optional.reduce((acc, t) => acc + t.estimatedMinutes, 0))})
             </span>
           </div>
           {optional.length === 0 ? (
-            <div className="p-3.5 bg-zinc-900/40 border border-dashed border-zinc-800 rounded-xl text-center text-xs text-zinc-500">
+            <div className="p-4 clay-card-sm text-center text-xs text-zinc-500 font-medium border-dashed">
               No Optional tasks.
             </div>
           ) : (
@@ -461,13 +455,13 @@ const TomorrowTaskRow: React.FC<{
   onChangeTier: (tier: PriorityTier) => void;
 }> = ({ task, canMoveUp, canMoveDown, onMoveUp, onMoveDown, onDelete, onChangeTier }) => {
   return (
-    <div className="p-3 bg-zinc-900 border border-zinc-800 rounded-xl flex items-center justify-between gap-2.5 text-xs shadow-xs">
-      <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+    <div className="p-3.5 clay-card-sm flex items-center justify-between gap-2.5 text-xs">
+      <div className="flex items-center gap-3 min-w-0 flex-1">
         <div className="flex flex-col gap-0.5 shrink-0">
           <button
             onClick={onMoveUp}
             disabled={!canMoveUp}
-            className="p-1 text-zinc-500 hover:text-zinc-200 disabled:opacity-20 cursor-pointer rounded hover:bg-zinc-800 transition"
+            className="p-1 text-zinc-400 hover:text-white disabled:opacity-20 cursor-pointer rounded-lg hover:bg-white/5 transition"
             title="Move Up"
           >
             <MoveUp className="w-3.5 h-3.5" />
@@ -475,7 +469,7 @@ const TomorrowTaskRow: React.FC<{
           <button
             onClick={onMoveDown}
             disabled={!canMoveDown}
-            className="p-1 text-zinc-500 hover:text-zinc-200 disabled:opacity-20 cursor-pointer rounded hover:bg-zinc-800 transition"
+            className="p-1 text-zinc-400 hover:text-white disabled:opacity-20 cursor-pointer rounded-lg hover:bg-white/5 transition"
             title="Move Down"
           >
             <MoveDown className="w-3.5 h-3.5" />
@@ -483,33 +477,33 @@ const TomorrowTaskRow: React.FC<{
         </div>
 
         <div className="min-w-0 flex-1">
-          <div className="font-medium text-zinc-100 truncate">{task.name}</div>
-          <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-zinc-400 mt-0.5">
+          <div className="font-semibold text-white truncate">{task.name}</div>
+          <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-zinc-400 mt-0.5 font-medium">
             <span className="shrink-0">⏱️ {formatMinutes(task.estimatedMinutes)}</span>
             {task.postponedCount > 0 && (
-              <span className="text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded font-medium shrink-0">
+              <span className="text-amber-300 bg-amber-400/10 px-1.5 py-0.5 rounded-full font-bold shrink-0">
                 Postponed {task.postponedCount}x
               </span>
             )}
-            {task.notes && <span className="truncate text-zinc-500 max-w-[150px] sm:max-w-xs">• {task.notes}</span>}
+            {task.notes && <span className="truncate text-zinc-400 max-w-[150px] sm:max-w-xs">• {task.notes}</span>}
           </div>
         </div>
       </div>
 
-      <div className="flex items-center gap-1.5 shrink-0">
+      <div className="flex items-center gap-2 shrink-0">
         <select
           value={task.priorityTier}
           onChange={(e) => onChangeTier(e.target.value as PriorityTier)}
-          className="px-2 py-1 bg-zinc-800 border border-zinc-700 rounded-lg text-[11px] text-zinc-300 focus:outline-none focus:border-emerald-500 min-h-[30px]"
+          className="clay-input px-2.5 py-1 text-[11px] text-zinc-200 focus:outline-none min-h-[32px] cursor-pointer"
         >
-          <option value="MUST_DO">Must Do</option>
-          <option value="SHOULD_DO">Should Do</option>
-          <option value="OPTIONAL">Optional</option>
+          <option value="MUST_DO" className="bg-[#141822] text-zinc-200">Must Do</option>
+          <option value="SHOULD_DO" className="bg-[#141822] text-zinc-200">Should Do</option>
+          <option value="OPTIONAL" className="bg-[#141822] text-zinc-200">Optional</option>
         </select>
 
         <button
           onClick={onDelete}
-          className="p-1.5 text-zinc-500 hover:text-rose-400 hover:bg-zinc-800 rounded-lg transition cursor-pointer min-h-[30px] min-w-[30px] flex items-center justify-center"
+          className="clay-btn-secondary p-1.5 rounded-xl transition cursor-pointer min-h-[32px] min-w-[32px] flex items-center justify-center text-zinc-400 hover:text-rose-400"
           title="Delete task"
         >
           <Trash2 className="w-3.5 h-3.5" />

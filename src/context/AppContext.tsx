@@ -363,7 +363,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
       const data = await res.json();
       if (!res.ok) {
-        return { success: false, error: data.error || 'Login failed.' };
+        return { success: false, error: data.error || 'Login failed.', code: data.code };
       }
 
       localStorage.setItem('daytrace_token', data.token);
