@@ -107,6 +107,7 @@ app.post('/api/auth/signup', async (req, res) => {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
+        avatarUrl: user.avatarUrl || profile.avatarUrl || '',
         createdAt: user.createdAt,
       },
       profile,
@@ -145,9 +146,9 @@ app.post('/api/auth/login', async (req, res) => {
 
     const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) {
-      console.warn(`[Auth] Login failed: Password mismatch for user: ${user.id} (${normalizedEmail})`);
+      console.log(`[Auth] Login rejected: Password mismatch for user: ${user.id} (${normalizedEmail})`);
       return res.status(401).json({
-        error: 'Incorrect password. Please verify your password or use "Forgot password?" to reset it.',
+        error: 'Incorrect password. Please verify your password, click the eye icon to view what you typed, or use "Reset password" below.',
         code: 'INVALID_PASSWORD',
       });
     }
@@ -165,6 +166,7 @@ app.post('/api/auth/login', async (req, res) => {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
+        avatarUrl: user.avatarUrl || profile.avatarUrl || '',
         createdAt: user.createdAt,
       },
       profile,
@@ -191,6 +193,7 @@ app.get('/api/auth/me', authenticateToken, async (req: AuthenticatedRequest, res
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
+        avatarUrl: user.avatarUrl || profile.avatarUrl || '',
         createdAt: user.createdAt,
       },
       profile,
@@ -207,6 +210,7 @@ app.patch('/api/auth/profile', authenticateToken, async (req: AuthenticatedReque
     const {
       firstName,
       lastName,
+      avatarUrl,
       role,
       customRole,
       custom_role,
@@ -221,14 +225,16 @@ app.patch('/api/auth/profile', authenticateToken, async (req: AuthenticatedReque
       welcomeDismissed,
     } = req.body;
 
-    if (firstName || lastName) {
+    if (firstName !== undefined || lastName !== undefined || avatarUrl !== undefined) {
       await db.updateUser(req.userId!, {
-        ...(firstName ? { firstName: String(firstName).trim() } : {}),
-        ...(lastName ? { lastName: String(lastName).trim() } : {}),
+        ...(firstName !== undefined ? { firstName: String(firstName).trim() } : {}),
+        ...(lastName !== undefined ? { lastName: String(lastName).trim() } : {}),
+        ...(avatarUrl !== undefined ? { avatarUrl: avatarUrl ? String(avatarUrl).trim() : '' } : {}),
       });
     }
 
     const updatedProfile = await db.updateUserProfile(req.userId!, {
+      ...(avatarUrl !== undefined ? { avatarUrl: avatarUrl ? String(avatarUrl).trim() : '' } : {}),
       ...(role !== undefined ? { role } : {}),
       ...(customRole !== undefined ? { customRole } : {}),
       ...(custom_role !== undefined ? { custom_role } : {}),
@@ -252,17 +258,77 @@ app.patch('/api/auth/profile', authenticateToken, async (req: AuthenticatedReque
         email: user!.email,
         firstName: user!.firstName,
         lastName: user!.lastName,
+        avatarUrl: user!.avatarUrl || updatedProfile.avatarUrl || '',
         createdAt: user!.createdAt,
       },
       profile: updatedProfile,
     });
   } catch (error: any) {
     console.error('Update profile error:', error);
-    return res.status(500).json({ error: 'Failed to update profile.' });
+    return res.status(500).json({ error: 'Failed to update profile settings.' });
   }
 });
 
-// 5. Forgot Password & Reset
+// 5. Upload / Update Avatar
+app.post('/api/auth/avatar', authenticateToken, async (req: AuthenticatedRequest, res) => {
+  try {
+    const { avatarUrl } = req.body;
+    if (avatarUrl === undefined) {
+      return res.status(400).json({ error: 'avatarUrl is required.' });
+    }
+
+    const cleanAvatar = typeof avatarUrl === 'string' ? avatarUrl.trim() : '';
+
+    await db.updateUser(req.userId!, { avatarUrl: cleanAvatar });
+    const updatedProfile = await db.updateUserProfile(req.userId!, { avatarUrl: cleanAvatar });
+    const user = await db.findUserById(req.userId!);
+
+    return res.json({
+      success: true,
+      avatarUrl: cleanAvatar,
+      user: {
+        id: user!.id,
+        email: user!.email,
+        firstName: user!.firstName,
+        lastName: user!.lastName,
+        avatarUrl: cleanAvatar,
+        createdAt: user!.createdAt,
+      },
+      profile: updatedProfile,
+    });
+  } catch (error: any) {
+    console.error('Update avatar error:', error);
+    return res.status(500).json({ error: 'Failed to update avatar.' });
+  }
+});
+
+// 6. Delete / Reset Avatar
+app.delete('/api/auth/avatar', authenticateToken, async (req: AuthenticatedRequest, res) => {
+  try {
+    await db.updateUser(req.userId!, { avatarUrl: '' });
+    const updatedProfile = await db.updateUserProfile(req.userId!, { avatarUrl: '' });
+    const user = await db.findUserById(req.userId!);
+
+    return res.json({
+      success: true,
+      avatarUrl: '',
+      user: {
+        id: user!.id,
+        email: user!.email,
+        firstName: user!.firstName,
+        lastName: user!.lastName,
+        avatarUrl: '',
+        createdAt: user!.createdAt,
+      },
+      profile: updatedProfile,
+    });
+  } catch (error: any) {
+    console.error('Delete avatar error:', error);
+    return res.status(500).json({ error: 'Failed to reset avatar.' });
+  }
+});
+
+// 7. Forgot Password & Reset
 app.post('/api/auth/forgot-password', async (req, res) => {
   try {
     const email = typeof req.body?.email === 'string' ? req.body.email.toLowerCase().trim() : '';
@@ -320,7 +386,25 @@ app.post('/api/auth/reset-password', async (req, res) => {
       resetTokenExpiry: undefined,
     });
 
-    return res.json({ success: true, message: 'Password has been successfully updated. You can now log in.' });
+    const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: '30d' });
+    const profile = await db.getUserProfile(user.id);
+
+    console.log(`[Auth] Password successfully reset for user: ${user.id} (${email})`);
+
+    return res.json({
+      success: true,
+      message: 'Password has been successfully updated.',
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        avatarUrl: user.avatarUrl || profile.avatarUrl || '',
+        createdAt: user.createdAt,
+      },
+      profile,
+    });
   } catch (error: any) {
     console.error('Reset password error:', error);
     return res.status(500).json({ error: 'Failed to reset password.' });

@@ -143,14 +143,8 @@ export const AuthView: React.FC = () => {
     setIsLoading(false);
 
     if (result.success) {
-      setSuccessMessage('Your password has been reset. You can now log in.');
-      setTimeout(() => {
-        setMode('LOGIN');
-        setForgotStep('REQUEST');
-        setPassword('');
-        setResetCode('');
-        resetMessages();
-      }, 1500);
+      setSuccessMessage('Password updated successfully! Logging you in...');
+      // State transitions automatically to authenticated via AppContext
     } else {
       setErrorMessage(result.error || 'Invalid or expired reset code.');
     }
@@ -546,16 +540,25 @@ export const AuthView: React.FC = () => {
                 ) : (
                   <form onSubmit={handleResetPassword} className="space-y-4">
                     <div>
-                      <label className="block text-xs font-semibold text-zinc-300 mb-1">
-                        6-Digit Reset Code
-                      </label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-xs font-semibold text-zinc-300">
+                          6-Digit Reset Code
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setForgotStep('REQUEST')}
+                          className="text-[11px] text-zinc-400 hover:text-emerald-300 transition-colors cursor-pointer"
+                        >
+                          Change Email
+                        </button>
+                      </div>
                       <input
                         type="text"
                         required
                         value={resetCode}
                         onChange={(e) => setResetCode(e.target.value)}
                         placeholder="123456"
-                        className="clay-input w-full px-3 py-2 text-sm text-white focus:outline-none tracking-widest font-mono text-center"
+                        className="clay-input w-full px-3 py-2.5 text-sm text-white focus:outline-none tracking-widest font-mono text-center"
                       />
                     </div>
 
@@ -563,14 +566,23 @@ export const AuthView: React.FC = () => {
                       <label className="block text-xs font-semibold text-zinc-300 mb-1">
                         New Password
                       </label>
-                      <input
-                        type={showPassword ? 'text' : 'password'}
-                        required
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="At least 6 characters"
-                        className="clay-input w-full px-3 py-2 text-sm text-white focus:outline-none"
-                      />
+                      <div className="relative">
+                        <input
+                          type={showPassword ? 'text' : 'password'}
+                          required
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          placeholder="At least 6 characters"
+                          className="clay-input w-full pl-3 pr-10 py-2.5 text-sm text-white focus:outline-none"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-3 text-zinc-500 hover:text-zinc-300 cursor-pointer"
+                        >
+                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
                     </div>
 
                     <button

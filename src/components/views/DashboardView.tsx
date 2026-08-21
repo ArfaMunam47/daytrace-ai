@@ -418,7 +418,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 onClick={onOpenInterruption}
                 className="p-3 clay-card-interactive text-left flex flex-col justify-between cursor-pointer min-h-[64px]"
               >
-                <div className="text-purple-400 font-bold mb-1 flex items-center gap-1.5">
+                <div className="text-teal-400 font-bold mb-1 flex items-center gap-1.5">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span className="truncate">Interruption</span>
                 </div>

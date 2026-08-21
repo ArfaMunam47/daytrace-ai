@@ -37,6 +37,7 @@ interface AppContextType {
   profile: UserProfile;
   userProfile: UserProfile;
   updateProfile: (profileUpdates: Partial<UserProfile> & { firstName?: string; lastName?: string }) => Promise<void>;
+  updateAvatar: (avatarDataUrl: string | null) => Promise<{ success: boolean; error?: string }>;
   completeOnboarding: (
     nameOrParams:
       | string
@@ -161,8 +162,11 @@ interface AppContextType {
 
   // Backup / Data Export
   exportAllDataJSON: () => string;
+  exportBackupJSON: () => void;
   importAllDataJSON: (jsonStr: string) => boolean;
+  importBackupJSON: (jsonStr: string) => boolean;
   resetToSampleData: () => void;
+  clearAllUserData: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -247,6 +251,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           const fetchedProfile: UserProfile = {
             ...DEFAULT_PROFILE_STRUCT,
             ...authData.profile,
+            avatarUrl: authData.user?.avatarUrl || authData.profile?.avatarUrl || '',
             name: `${authData.user.firstName} ${authData.user.lastName}`.trim(),
             firstName: authData.user.firstName,
             lastName: authData.user.lastName,
@@ -373,6 +378,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const loadedProfile: UserProfile = {
         ...DEFAULT_PROFILE_STRUCT,
         ...data.profile,
+        avatarUrl: data.user?.avatarUrl || data.profile?.avatarUrl || '',
         name: `${data.user.firstName} ${data.user.lastName}`.trim(),
         firstName: data.user.firstName,
         lastName: data.user.lastName,
@@ -423,6 +429,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       const newProfile: UserProfile = {
         ...DEFAULT_PROFILE_STRUCT,
         ...data.profile,
+        avatarUrl: data.user?.avatarUrl || data.profile?.avatarUrl || '',
         name: `${firstName} ${lastName}`.trim(),
         firstName,
         lastName,
@@ -487,6 +494,45 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       });
       const data = await res.json();
       if (!res.ok) return { success: false, error: data.error };
+
+      if (data.token && data.user) {
+        localStorage.setItem('daytrace_token', data.token);
+        setToken(data.token);
+        setUser(data.user);
+
+        const loadedProfile: UserProfile = {
+          ...DEFAULT_PROFILE_STRUCT,
+          ...data.profile,
+          avatarUrl: data.user?.avatarUrl || data.profile?.avatarUrl || '',
+          name: `${data.user.firstName} ${data.user.lastName}`.trim(),
+          firstName: data.user.firstName,
+          lastName: data.user.lastName,
+        };
+        setProfile(loadedProfile);
+        setAuthStatus('AUTHENTICATED');
+
+        // Fetch user's persistent data
+        try {
+          const dataRes = await fetch('/api/data', {
+            headers: { Authorization: `Bearer ${data.token}` },
+          });
+          if (dataRes.ok) {
+            const dbData = await dataRes.json();
+            setGoals(dbData.goals || []);
+            setProjects(dbData.projects || []);
+            setPlannedTasks(dbData.tasks || []);
+            setActivityLogs(dbData.activityLogs || []);
+            setDistractionLimits(dbData.timeLimits?.length ? dbData.timeLimits : DEFAULT_DISTRACTION_LIMITS);
+            setHabits(dbData.habits || []);
+            setWeeklyReviews(dbData.reviews?.filter((r: any) => r.type === 'weekly') || []);
+            setMonthlyReviews(dbData.reviews?.filter((r: any) => r.type === 'monthly') || []);
+            setTimelineMonths(dbData.growthMilestones || []);
+          }
+        } catch {
+          // Non-blocking data fetch
+        }
+      }
+
       return { success: true, message: data.message };
     } catch {
       return { success: false, error: 'Failed to reset password.' };
@@ -505,11 +551,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       name: updatedName,
     }));
 
-    if (profileUpdates.firstName || profileUpdates.lastName) {
+    if (profileUpdates.firstName || profileUpdates.lastName || profileUpdates.avatarUrl !== undefined) {
       setUser((prev) => (prev ? {
         ...prev,
         ...(profileUpdates.firstName ? { firstName: profileUpdates.firstName } : {}),
         ...(profileUpdates.lastName ? { lastName: profileUpdates.lastName } : {}),
+        ...(profileUpdates.avatarUrl !== undefined ? { avatarUrl: profileUpdates.avatarUrl } : {}),
       } : null));
     }
 
@@ -520,6 +567,27 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       });
     } catch (err) {
       console.error('Failed to update profile on server:', err);
+    }
+  };
+
+  const updateAvatar = async (avatarDataUrl: string | null): Promise<{ success: boolean; error?: string }> => {
+    const cleanUrl = avatarDataUrl || '';
+    setProfile((prev) => ({ ...prev, avatarUrl: cleanUrl }));
+    setUser((prev) => (prev ? { ...prev, avatarUrl: cleanUrl } : null));
+
+    try {
+      const res = await authFetch('/api/auth/avatar', {
+        method: 'POST',
+        body: JSON.stringify({ avatarUrl: cleanUrl }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        return { success: false, error: data.error || 'Failed to update avatar.' };
+      }
+      return { success: true };
+    } catch (err: any) {
+      console.error('Failed to update avatar on server:', err);
+      return { success: false, error: 'Network error while updating avatar.' };
     }
   };
 
@@ -1412,6 +1480,48 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
+  const exportBackupJSON = () => {
+    const dataStr = exportAllDataJSON();
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const dateStamp = new Date().toISOString().split('T')[0];
+    a.href = url;
+    a.download = `daytrace_backup_${dateStamp}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const importBackupJSON = (jsonStr: string): boolean => {
+    return importAllDataJSON(jsonStr);
+  };
+
+  const clearAllUserData = () => {
+    setGoals([]);
+    setProjects([]);
+    setPlannedTasks([]);
+    setActivityLogs([]);
+    setHabits([]);
+    setWeeklyReviews([]);
+    setMonthlyReviews([]);
+    setTimelineMonths([]);
+    setActiveTimer(null);
+    authFetch('/api/sync', {
+      method: 'POST',
+      body: JSON.stringify({
+        goals: [],
+        projects: [],
+        tasks: [],
+        activityLogs: [],
+        habits: [],
+        reviews: [],
+        growthMilestones: [],
+      }),
+    });
+  };
+
   const resetToSampleData = () => {
     setGoals([]);
     setProjects([]);
@@ -1446,6 +1556,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         profile,
         userProfile: profile,
         updateProfile,
+        updateAvatar,
         completeOnboarding,
         goals,
         addGoal,
@@ -1499,8 +1610,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         playSound,
         authFetch,
         exportAllDataJSON,
+        exportBackupJSON,
         importAllDataJSON,
+        importBackupJSON,
         resetToSampleData,
+        clearAllUserData,
       }}
     >
       {children}

@@ -11,6 +11,7 @@ export interface UserRecord {
   passwordHash: string;
   firstName: string;
   lastName: string;
+  avatarUrl?: string;
   createdAt: string;
   updatedAt: string;
   resetToken?: string;
@@ -19,6 +20,7 @@ export interface UserRecord {
 
 export interface UserProfileRecord {
   userId: string;
+  avatarUrl?: string;
   role?: string;
   customRole?: string;
   custom_role?: string;
@@ -253,16 +255,19 @@ class DatabaseService {
             password_hash TEXT NOT NULL,
             first_name VARCHAR(128) NOT NULL,
             last_name VARCHAR(128) NOT NULL,
+            avatar_url TEXT,
             reset_token VARCHAR(64),
             reset_token_expiry BIGINT,
             created_at TIMESTAMPTZ DEFAULT NOW(),
             updated_at TIMESTAMPTZ DEFAULT NOW()
           );
+          ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT;
         `);
 
         await client.query(`
           CREATE TABLE IF NOT EXISTS profiles (
             user_id VARCHAR(64) PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+            avatar_url TEXT,
             role VARCHAR(128),
             custom_role VARCHAR(128),
             occupation VARCHAR(255),
@@ -276,6 +281,7 @@ class DatabaseService {
             welcome_dismissed BOOLEAN DEFAULT FALSE,
             updated_at TIMESTAMPTZ DEFAULT NOW()
           );
+          ALTER TABLE profiles ADD COLUMN IF NOT EXISTS avatar_url TEXT;
         `);
 
         await client.query(`
@@ -524,7 +530,7 @@ class DatabaseService {
     if (this.engine === 'postgres' && this.pgPool) {
       await this.ensurePostgresReady();
       const res = await this.pgPool.query(
-        'SELECT id, email, password_hash as "passwordHash", first_name as "firstName", last_name as "lastName", reset_token as "resetToken", reset_token_expiry as "resetTokenExpiry", created_at as "createdAt", updated_at as "updatedAt" FROM users WHERE email = $1',
+        'SELECT id, email, password_hash as "passwordHash", first_name as "firstName", last_name as "lastName", avatar_url as "avatarUrl", reset_token as "resetToken", reset_token_expiry as "resetTokenExpiry", created_at as "createdAt", updated_at as "updatedAt" FROM users WHERE email = $1',
         [cleanEmail]
       );
       if (res.rows.length === 0) return null;
@@ -540,7 +546,7 @@ class DatabaseService {
     if (this.engine === 'postgres' && this.pgPool) {
       await this.ensurePostgresReady();
       const res = await this.pgPool.query(
-        'SELECT id, email, password_hash as "passwordHash", first_name as "firstName", last_name as "lastName", reset_token as "resetToken", reset_token_expiry as "resetTokenExpiry", created_at as "createdAt", updated_at as "updatedAt" FROM users WHERE id = $1',
+        'SELECT id, email, password_hash as "passwordHash", first_name as "firstName", last_name as "lastName", avatar_url as "avatarUrl", reset_token as "resetToken", reset_token_expiry as "resetTokenExpiry", created_at as "createdAt", updated_at as "updatedAt" FROM users WHERE id = $1',
         [id]
       );
       if (res.rows.length === 0) return null;
@@ -563,6 +569,7 @@ class DatabaseService {
       passwordHash: user.passwordHash,
       firstName: user.firstName.trim(),
       lastName: user.lastName.trim(),
+      avatarUrl: user.avatarUrl || undefined,
       createdAt: now,
       updatedAt: now,
     };
@@ -570,16 +577,17 @@ class DatabaseService {
     if (this.engine === 'postgres' && this.pgPool) {
       await this.ensurePostgresReady();
       await this.pgPool.query(
-        'INSERT INTO users (id, email, password_hash, first_name, last_name, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7)',
-        [newUser.id, newUser.email, newUser.passwordHash, newUser.firstName, newUser.lastName, newUser.createdAt, newUser.updatedAt]
+        'INSERT INTO users (id, email, password_hash, first_name, last_name, avatar_url, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+        [newUser.id, newUser.email, newUser.passwordHash, newUser.firstName, newUser.lastName, newUser.avatarUrl || null, newUser.createdAt, newUser.updatedAt]
       );
 
       // Create default profile
       await this.pgPool.query(
-        `INSERT INTO profiles (user_id, occupation, daily_capacity_hours, main_goals_summary, timezone, theme, sound_effects, notifications_enabled, onboarded, welcome_dismissed, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+        `INSERT INTO profiles (user_id, avatar_url, occupation, daily_capacity_hours, main_goals_summary, timezone, theme, sound_effects, notifications_enabled, onboarded, welcome_dismissed, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
         [
           newUser.id,
+          newUser.avatarUrl || null,
           'Professional / Builder',
           4.5,
           JSON.stringify([]),
@@ -610,6 +618,7 @@ class DatabaseService {
     this.fileData.users.push(newUser);
     this.fileData.profiles.push({
       userId: newUser.id,
+      avatarUrl: newUser.avatarUrl,
       occupation: 'Professional / Builder',
       dailyCapacityHours: 4.5,
       mainGoalsSummary: [],
@@ -650,13 +659,14 @@ class DatabaseService {
 
       const newFirstName = updates.firstName !== undefined ? updates.firstName.trim() : current.firstName;
       const newLastName = updates.lastName !== undefined ? updates.lastName.trim() : current.lastName;
+      const newAvatarUrl = updates.avatarUrl !== undefined ? updates.avatarUrl : current.avatarUrl;
       const newPasswordHash = updates.passwordHash || current.passwordHash;
       const newResetToken = updates.resetToken !== undefined ? updates.resetToken : current.resetToken;
       const newResetExpiry = updates.resetTokenExpiry !== undefined ? updates.resetTokenExpiry : current.resetTokenExpiry;
 
       await this.pgPool.query(
-        `UPDATE users SET first_name = $1, last_name = $2, password_hash = $3, reset_token = $4, reset_token_expiry = $5, updated_at = $6 WHERE id = $7`,
-        [newFirstName, newLastName, newPasswordHash, newResetToken || null, newResetExpiry || null, now, id]
+        `UPDATE users SET first_name = $1, last_name = $2, avatar_url = $3, password_hash = $4, reset_token = $5, reset_token_expiry = $6, updated_at = $7 WHERE id = $8`,
+        [newFirstName, newLastName, newAvatarUrl || null, newPasswordHash, newResetToken || null, newResetExpiry || null, now, id]
       );
 
       return {
@@ -664,6 +674,7 @@ class DatabaseService {
         ...updates,
         firstName: newFirstName,
         lastName: newLastName,
+        avatarUrl: newAvatarUrl,
         updatedAt: now,
       };
     }
@@ -684,7 +695,7 @@ class DatabaseService {
     if (this.engine === 'postgres' && this.pgPool) {
       await this.ensurePostgresReady();
       const res = await this.pgPool.query(
-        `SELECT user_id as "userId", role, custom_role as "customRole", occupation, daily_capacity_hours as "dailyCapacityHours",
+        `SELECT user_id as "userId", avatar_url as "avatarUrl", role, custom_role as "customRole", occupation, daily_capacity_hours as "dailyCapacityHours",
                 main_goals_summary as "mainGoalsSummary", timezone, theme, sound_effects as "soundEffects",
                 notifications_enabled as "notificationsEnabled", onboarded, welcome_dismissed as "welcomeDismissed", updated_at as "updatedAt"
          FROM profiles WHERE user_id = $1`,
@@ -714,10 +725,10 @@ class DatabaseService {
       };
 
       await this.pgPool.query(
-        `INSERT INTO profiles (user_id, occupation, daily_capacity_hours, main_goals_summary, timezone, theme, sound_effects, notifications_enabled, onboarded, welcome_dismissed, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        `INSERT INTO profiles (user_id, avatar_url, occupation, daily_capacity_hours, main_goals_summary, timezone, theme, sound_effects, notifications_enabled, onboarded, welcome_dismissed, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
          ON CONFLICT (user_id) DO NOTHING`,
-        [userId, defaultProf.occupation, defaultProf.dailyCapacityHours, JSON.stringify(defaultProf.mainGoalsSummary), defaultProf.timezone, defaultProf.theme, defaultProf.soundEffects, defaultProf.notificationsEnabled, defaultProf.onboarded, defaultProf.welcomeDismissed, now]
+        [userId, defaultProf.avatarUrl || null, defaultProf.occupation, defaultProf.dailyCapacityHours, JSON.stringify(defaultProf.mainGoalsSummary), defaultProf.timezone, defaultProf.theme, defaultProf.soundEffects, defaultProf.notificationsEnabled, defaultProf.onboarded, defaultProf.welcomeDismissed, now]
       );
       return defaultProf;
     }
@@ -755,9 +766,10 @@ class DatabaseService {
       };
 
       await this.pgPool.query(
-        `INSERT INTO profiles (user_id, role, custom_role, occupation, daily_capacity_hours, main_goals_summary, timezone, theme, sound_effects, notifications_enabled, onboarded, welcome_dismissed, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        `INSERT INTO profiles (user_id, avatar_url, role, custom_role, occupation, daily_capacity_hours, main_goals_summary, timezone, theme, sound_effects, notifications_enabled, onboarded, welcome_dismissed, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
          ON CONFLICT (user_id) DO UPDATE SET
+           avatar_url = EXCLUDED.avatar_url,
            role = EXCLUDED.role,
            custom_role = EXCLUDED.custom_role,
            occupation = EXCLUDED.occupation,
@@ -772,6 +784,7 @@ class DatabaseService {
            updated_at = EXCLUDED.updated_at`,
         [
           userId,
+          merged.avatarUrl || null,
           merged.role || null,
           merged.customRole || merged.custom_role || null,
           merged.occupation || 'Professional / Builder',
@@ -793,6 +806,7 @@ class DatabaseService {
     if (idx === -1) {
       const newProfile: UserProfileRecord = {
         userId,
+        avatarUrl: updates.avatarUrl,
         occupation: updates.occupation || 'Professional / Builder',
         dailyCapacityHours: updates.dailyCapacityHours || 4.5,
         mainGoalsSummary: updates.mainGoalsSummary || [],

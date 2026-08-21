@@ -68,6 +68,7 @@ export interface User {
   email: string;
   firstName: string;
   lastName: string;
+  avatarUrl?: string;
   createdAt: string;
 }
 
@@ -77,6 +78,7 @@ export interface UserProfile {
   name: string;
   firstName?: string;
   lastName?: string;
+  avatarUrl?: string;
   role?: UserRoleIdentifier;
   customRole?: string;
   custom_role?: string;

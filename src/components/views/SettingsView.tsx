@@ -16,6 +16,8 @@ import {
   CheckCircle2,
   Clock,
   RefreshCw,
+  ArrowLeft,
+  Sparkles,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import {
@@ -26,7 +28,12 @@ import {
 } from '../../utils/sound';
 import { PhilosophyModal } from '../PhilosophyModal';
 
-export const SettingsView: React.FC = () => {
+interface SettingsViewProps {
+  onGoBack?: () => void;
+  previousTabLabel?: string;
+}
+
+export const SettingsView: React.FC<SettingsViewProps> = ({ onGoBack, previousTabLabel = 'Dashboard' }) => {
   const {
     profile,
     updateProfile,
@@ -101,19 +108,38 @@ export const SettingsView: React.FC = () => {
 
   return (
     <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6 animate-in fade-in duration-200 text-xs">
-      {/* Header */}
-      <div className="flex items-center justify-between pb-3 border-b border-white/5">
-        <div>
-          <div className="flex items-center gap-2">
-            <Settings className="w-5 h-5 text-emerald-400" />
-            <h1 className="text-xl md:text-2xl font-extrabold text-white tracking-tight">
-              Settings & Preferences
-            </h1>
+      {/* Header with Back Navigation */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-white/5 gap-3">
+        <div className="flex items-center gap-3">
+          {onGoBack && (
+            <button
+              onClick={onGoBack}
+              type="button"
+              className="clay-btn-secondary px-3 py-2 rounded-xl flex items-center gap-1.5 text-xs font-semibold text-zinc-300 hover:text-white transition cursor-pointer min-h-[38px] shrink-0"
+              title={`Return to ${previousTabLabel}`}
+            >
+              <ArrowLeft className="w-4 h-4 text-emerald-400" />
+              <span>Back</span>
+            </button>
+          )}
+          <div>
+            <div className="flex items-center gap-2">
+              <Settings className="w-5 h-5 text-emerald-400" />
+              <h1 className="text-xl md:text-2xl font-extrabold text-white tracking-tight">
+                Settings & Preferences
+              </h1>
+            </div>
+            <p className="text-xs text-zinc-400 mt-0.5 font-medium">
+              Configure your profile, realistic work capacity, sound feedback, and data backups.
+            </p>
           </div>
-          <p className="text-xs text-zinc-400 mt-1 font-medium">
-            Configure your profile, realistic work capacity, sound feedback, and data backups.
-          </p>
         </div>
+
+        {onGoBack && (
+          <span className="text-[11px] text-zinc-500 font-mono hidden sm:inline-block">
+            From: {previousTabLabel}
+          </span>
+        )}
       </div>
 
       {/* User Profile Form */}
@@ -441,6 +467,20 @@ export const SettingsView: React.FC = () => {
           </button>
         )}
       </div>
+
+      {/* Bottom Back Button */}
+      {onGoBack && (
+        <div className="pt-2 flex justify-start">
+          <button
+            type="button"
+            onClick={onGoBack}
+            className="clay-btn-secondary px-4 py-2.5 rounded-xl flex items-center gap-2 text-xs font-semibold text-zinc-300 hover:text-white"
+          >
+            <ArrowLeft className="w-4 h-4 text-emerald-400" />
+            <span>Return to {previousTabLabel}</span>
+          </button>
+        </div>
+      )}
 
       {/* Philosophy Modal */}
       <PhilosophyModal

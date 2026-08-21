@@ -20,7 +20,8 @@
 @layer utilities {
   /* Hide scrollbar for Chrome, Safari and Opera */
   .no-scrollbar::-webkit-scrollbar,
-  .scrollbar-none::-webkit-scrollbar {
+  .scrollbar-none::-webkit-scrollbar,
+  .sidebar-nav::-webkit-scrollbar {
     display: none !important;
     width: 0 !important;
     height: 0 !important;
@@ -28,7 +29,8 @@
 
   /* Hide scrollbar for IE, Edge and Firefox */
   .no-scrollbar,
-  .scrollbar-none {
+  .scrollbar-none,
+  .sidebar-nav {
     -ms-overflow-style: none !important;  /* IE and Edge */
     scrollbar-width: none !important;  /* Firefox */
   }
@@ -44,6 +46,28 @@
     display: none !important;
     width: 0 !important;
     height: 0 !important;
+  }
+
+  /* Refined dark custom scrollbar for elements with .scrollbar-thin or general scroll */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: rgba(15, 19, 26, 0.6);
+    border-radius: 9999px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 9999px;
+    border: 1px solid rgba(0, 0, 0, 0.3);
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: rgba(16, 185, 129, 0.6);
+  }
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.22) rgba(15, 19, 26, 0.6);
   }
 
   /* ---------------------------------------------------- */
@@ -294,6 +318,16 @@
     color: #34d399;
     box-shadow: 
       0 2px 6px -1px rgba(5, 150, 105, 0.2),
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.15),
+      inset 0 -1px 2px 0 rgba(0, 0, 0, 0.2);
+  }
+
+  .clay-pill-teal {
+    background: linear-gradient(145deg, rgba(20, 184, 166, 0.2) 0%, rgba(13, 148, 136, 0.15) 100%);
+    border: 1px solid rgba(20, 184, 166, 0.3);
+    color: #2dd4bf;
+    box-shadow: 
+      0 2px 6px -1px rgba(13, 148, 136, 0.2),
       inset 0 1px 1px 0 rgba(255, 255, 255, 0.15),
       inset 0 -1px 2px 0 rgba(0, 0, 0, 0.2);
   }
